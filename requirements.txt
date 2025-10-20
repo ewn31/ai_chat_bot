@@ -1,0 +1,17 @@
+requests
+dotenv
+langchain
+chromadb
+langchain-together
+langchain_community
+langchain_huggingface
+sentence-transformers
+unstructured
+libmagic
+pandas
+scikit-learn
+joblib
+gradio
+nltk
+flask
+langdetect

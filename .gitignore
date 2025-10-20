@@ -1,0 +1,90 @@
+# Environment variables (contains API keys!)
+.env
+.env.local
+.env.*.local
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Python cache and compiled files
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Log files
+*.log
+logs/
+
+# CSV data files (if contains sensitive data)
+chat_bot_data.csv
+*.csv
+
+# Utility/test files
+utils/improve_chat_data.py
+utils/test_chat_data.py
+utils/comprehensive_test.py
+utils/final_test_demo.py
+utils/sample*
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+
+# Model files (can be large)
+*.joblib
+*.pkl
+*.pickle
+*.h5
+*.pt
+*.pth
+
+# Chroma vector database
+chroma_db/
+.chroma/
+chromadb/
+
+# Gradio cache
+gradio_cached_examples/
+.gradio/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# pytest cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/

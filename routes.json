@@ -1,0 +1,22 @@
+{
+    "default_whatsapp": {
+        "name": "WhatsApp",
+        "api_url": "https://gate.whapi.cloud",
+        "api_token": "qqzjkILSTfrV3eLZdeiDE5DrRftgk0EB",
+        "endpoint": {
+            "text": "messages/text",
+            "image": "messages/image"
+        }
+    },
+
+    "test_route": {
+        "name": "Test Route",
+        "api_url": "https://gate.whapi.cloud",
+        "api_token": "WMyMhrLCKZddmPpS8eVcnlixG3jCRqSo",
+        "endpoint": {
+            "text": "messages/text",
+            "image": "messages/image"
+        }
+    }
+
+}
