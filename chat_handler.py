@@ -16,6 +16,11 @@ from language_dectector.language_detector import detect_language
 
 dotenv.load_dotenv()
 
+GREEETINGS_EN = """Hello bestie, welcome to aunty queen connect. I’m your good friend AWAA and I’m here to listen to, and share truthful, judgment-free information about safe abortion and reproductive health with you.
+Feel free to ask me anything. It’s private, safe, and always with care."""
+
+GREETINGS_FR = "Bienvenue! Comment puis-je vous aider aujourd'hui?"
+
 MODE = os.getenv('MODE')
 print(f"MODE: {MODE}")
 POSSIBLE_LOGGING_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
@@ -54,9 +59,9 @@ def incoming_messages(user, message):
             logging.info("Detected language for user %s: %s", user, language)
             logging.info("Sending welcome message to user: %s", user)
             if language == 'fr':
-                send_message(user, "Bienvenue! Comment puis-je vous aider aujourd'hui?")
+                send_message(user, GREETINGS_FR)
             else:
-                send_message(user, "Welcome! How can I assist you today?")
+                send_message(user, GREEETINGS_EN)
             return
         logging.info("Saving conversation for user: %s", user)
         save_conversation(user, message)
@@ -146,8 +151,25 @@ def send_message(user, message):
                 logging.info("Message sent successfully to user: %s", user)
                 save_conversation("ai_bot", response['message'])
 
-def escalate_to_counsellor(user, transcript):
+def notify_counsellor(counsellor_id, ticket_id):
+    logging.info("Notifying counsellor %s about ticket %s", counsellor_id, ticket_id)
+    # Implement notification logic here (e.g., send email or message)
     pass
+
+def escalate_to_counsellor(user):
+    #create a new ticket
+    ticket_id = ticket.create_ticket(user)
+    #get a counsellor
+    #assign a counsellor
+    if ticket.assign_handler(ticket_id, "counsellor_id"):
+        logging.info("Counsellor assigned successfully to ticket: %s", ticket_id)
+    else:
+        logging.error("Failed to assign counsellor to ticket: %s", ticket_id)
+    #notify counsellor
+    
+    
+    #return ticket id
+    return ticket_id
 
 def save_conversation(user, res):
     logging.info("saving conversation")
@@ -169,6 +191,7 @@ def get_transcript(user):
     ts = transcript.generate_transcript(user)
     logging.debug("transcript: %s", ts)
     return ts
+
 
 if __name__ == "__main__":
     # Example usage
