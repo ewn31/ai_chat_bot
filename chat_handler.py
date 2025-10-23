@@ -73,9 +73,9 @@ def incoming_messages(user, message):
         ai_response = get_ai_response(user, user_message)
         if ai_response is None:
             pass
-        if ai_response == "escalate to counsellor":
-            user_transcript = get_transcript(user)
-            escalate_to_counsellor(user, user_transcript)
+        if ai_response == "Escalating to a counsellor...":
+            #user_transcript = get_transcript(user)
+            escalate_to_counsellor(user)
         else:
             print(f"AI response to {user}: {ai_response}")
             send_message(user, ai_response)
@@ -157,14 +157,17 @@ def notify_counsellor(counsellor_id, ticket_id):
     pass
 
 def escalate_to_counsellor(user):
+    #change user handler to counsellor
+    logging.info("Escalating user %s to counsellor", user)
+    users.update_user_handler(user, "counsellor")
     #create a new ticket
     ticket_id = ticket.create_ticket(user)
     #get a counsellor
     #assign a counsellor
-    if ticket.assign_handler(ticket_id, "counsellor_id"):
-        logging.info("Counsellor assigned successfully to ticket: %s", ticket_id)
-    else:
-        logging.error("Failed to assign counsellor to ticket: %s", ticket_id)
+    #if ticket.assign_handler(ticket_id, "counsellor_id"):
+    #    logging.info("Counsellor assigned successfully to ticket: %s", ticket_id)
+    #else:
+    #   logging.error("Failed to assign counsellor to ticket: %s", ticket_id)
     #notify counsellor
     
     
