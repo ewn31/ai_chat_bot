@@ -36,6 +36,8 @@ utils/test_chat_data.py
 utils/comprehensive_test.py
 utils/final_test_demo.py
 utils/sample*
+ai_bot/test*
+verify_channels.py
 
 # IDE/Editor files
 .vscode/

@@ -37,8 +37,12 @@ def create_ticket(user):
         str or None: The created ticket ID in format "00T{user_id}", 
                     or None if creation failed.
     """
-    ts = transcript.generate_transcript(user)
+    #check if ticket already exists
     ticket_id = f"00T{user}"
+    if db.get_ticket(ticket_id):
+        print(f"Ticket already exists for user: {user}")
+        return ticket_id
+    ts = transcript.generate_transcript(user)
     try:
         db.create_ticket(user, ticket_id, transcript=ts)
         return ticket_id

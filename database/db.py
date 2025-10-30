@@ -81,6 +81,7 @@ def init_db():
     Initialize the database with the schema from schema.sql file.
     
     Reads and executes the SQL schema file to create database tables.
+    After initialization, applies any pending schema migrations.
     Prints confirmation message upon completion.
     """
     logging.info("Initializing database")
@@ -104,6 +105,15 @@ def init_db():
         close_db(cur.connection)
     print("Initialized the database.")
     logging.info("Database initialization complete")
+    
+    # Apply any pending migrations
+    try:
+        from database.updates import apply_all_migrations
+        print("\nChecking for schema updates...")
+        apply_all_migrations()
+    except Exception as e:
+        logging.warning(f"Could not apply migrations: {e}")
+        print(f"Warning: Could not apply migrations: {e}")
 
 def user_exist(user_id):
     """
@@ -181,7 +191,7 @@ def update_user(user_id, field, data):
     logging.debug(f"Attempting to update user {user_id}, field: {field}")
     conn = connect_db()
     cur = conn.cursor()
-    if field not in ["handler", "profile_data"]:
+    if field not in ["handler", "auth_key", "gender", "age_range"]:
         logging.error(f"Invalid field name attempted: {field}")
         raise ValueError("Invalid field name")
     query = f"UPDATE users SET {field} = ? WHERE id = ?"
@@ -264,7 +274,7 @@ def delete_user_profile(user_id):
     logging.info(f"Successfully deleted user profile: {user_id}")
     return True
 
-def counsellor_exist(counsellor_id):
+def counsellor_exist(counsellor):
     """
     Check if a counsellor exists in the database.
     
@@ -274,13 +284,13 @@ def counsellor_exist(counsellor_id):
     Returns:
         bool: True if counsellor exists, False otherwise.
     """
-    logging.debug(f"Checking if counsellor exists: {counsellor_id}")
+    logging.debug(f"Checking if counsellor exists: {counsellor}")
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute("SELECT 1 FROM counsellors WHERE id = ?", (counsellor_id,))
+    cur.execute("SELECT * FROM counsellors WHERE username = ?", (counsellor,))
     exists = cur.fetchone() is not None
     close_db(conn)
-    logging.info(f"Counsellor {counsellor_id} exists: {exists}")
+    logging.info(f"Counsellor {counsellor} exists: {exists}")
     return True if exists else False
 
 def save_counsellor(counsellor):
@@ -289,57 +299,60 @@ def save_counsellor(counsellor):
     
     Args:
         counsellor (dict): Dictionary containing counsellor data with keys:
-                        'name', and 'email'.
+                        'name', 'username' and 'email'.
                           
     Returns:
         bool: True if counsellor was saved successfully.
     """
     logging.info(f"Attempting to save new counsellor: {counsellor.get('name', 'Unknown')}")
+    if not counsellor.get('username'):
+        logging.error("Counsellor data missing 'username' key")
+        return False
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO counsellors (name, email) VALUES (?, ?)",
-                (counsellor['name'], counsellor['email']))
+    cur.execute("INSERT INTO counsellors (name, email) VALUES (?, ?, ?)",
+                (counsellor['name'], counsellor['username'], counsellor['email']))
     conn.commit()
     close_db(conn)
-    logging.info(f"Successfully saved counsellor: {counsellor['name']}")
+    logging.info(f"Successfully saved counsellor: {counsellor['username']}")
     return True
 
-def get_counsellors_ids():
+def get_counsellors():
     """
-    Get all counsellor IDs from the database.
+    Get all counsellor usernames from the database.
     
     Returns:
-        list: List of counsellor IDs.
+        list: List of counsellors ussernames.
     """
     logging.debug("Retrieving all counsellor IDs")
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute("SELECT id FROM counsellors")
-    ids = [row[0] for row in cur.fetchall()]
+    cur.execute("SELECT username FROM counsellors")
+    usernames = [row[0] for row in cur.fetchall()]
     close_db(conn)
-    logging.info(f"Retrieved {len(ids)} counsellor IDs")
-    return ids
+    logging.info(f"Retrieved {len(ids)} counsellors usernames")
+    return usernames
 
-def get_counsellor(counsellor_id):
+def get_counsellor(counsellor):
     """
     Get a counsellor's details by their ID.
     
     Args:
-        counsellor_id (str): The unique identifier of the counsellor.
+        counsellor (str): The username of the counsellor.
         
     Returns:
-        tuple or None: Counsellor data if found, None otherwise.
+        dictionary or None: Counsellor data if found, None otherwise.
     """
-    logging.debug(f"Retrieving counsellor details for: {counsellor_id}")
+    logging.debug(f"Retrieving counsellor details for: {counsellor}")
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM counsellors WHERE id = ?", (counsellor_id,))
+    cur.execute("SELECT * FROM counsellors WHERE username = ?", (counsellor,))
     counsellor = cur.fetchone()
     close_db(conn)
     if counsellor:
-        logging.info(f"Counsellor found: {counsellor_id}")
+        logging.info(f"Counsellor found: {counsellor}")
     else:
-        logging.warning(f"No counsellor found with ID: {counsellor_id}")
+        logging.warning(f"No counsellor found with ID: {counsellor}")
     return counsellor
 
 def get_counsellors():
@@ -361,7 +374,7 @@ def update_counsellor(counsellor, field, data):
     """Updates a field in a counsellor
 
     Args:
-        counsellor (str): The ID of the counsellor to update.
+        counsellor (str): The username of the counsellor to update.
         field (str): The field to update (e.g., 'name', 'email').
         data (str): The new value for the field.
     
@@ -372,7 +385,7 @@ def update_counsellor(counsellor, field, data):
     conn = connect_db()
     try:
         cur = conn.cursor()
-        cur.execute(f"UPDATE counsellors SET {field} = ? WHERE id = ?", (data, counsellor))
+        cur.execute(f"UPDATE counsellors SET {field} = ? WHERE username = ?", (data, counsellor))
         conn.commit()
         close_db(conn)
         logging.info(f"Successfully updated counsellor {counsellor}, field: {field}")
@@ -382,26 +395,26 @@ def update_counsellor(counsellor, field, data):
         close_db(conn)
         return False
 
-def delete_counsellor(counsellor_id):
+def delete_counsellor(username):
     """Delete a counsellor from the database
 
     Args:
-        counsellor_id (str): The id of the counsellor to be deleted
+        username (str): The id of the counsellor to be deleted
     
     Return:
         bool: Status of the delete
     """
-    logging.info(f"Attempting to delete counsellor: {counsellor_id}")
+    logging.info(f"Attempting to delete counsellor: {username}")
     try:
         conn = connect_db()
         cur = conn.cursor()
-        cur.execute("DELETE FROM counsellors WHERE id = ?", (counsellor_id,))
+        cur.execute("DELETE FROM counsellors WHERE username = ?", (username,))
         conn.commit()
         close_db(conn)
-        logging.info(f"Successfully deleted counsellor: {counsellor_id}")
+        logging.info(f"Successfully deleted counsellor: {username}")
         return True
     except Exception as e:
-        logging.error(f"Error deleting counsellor {counsellor_id}: {e}")
+        logging.error(f"Error deleting counsellor {username}: {e}")
         return False
 
 def create_ticket(user_id, ticket_id, transcript):
@@ -444,9 +457,10 @@ def get_ticket(ticket_id):
     close_db(conn)
     if ticket:
         logging.info(f"Ticket found: {ticket_id}")
+        return ticket
     else:
         logging.warning(f"No ticket found with ID: {ticket_id}")
-    return ticket
+        return None
 
 def update_ticket_status(ticket_id, status):
     """
@@ -532,7 +546,8 @@ def assign_ticket_handler(ticket_id, handler):
     else:
         cur.execute("UPDATE tickets SET handler = ? WHERE id = ?", (handler, ticket_id))
         cur.execute("UPDATE tickets SET status = 'in_progress' WHERE id = ?", (ticket_id,))
-        cur.execute("UPDATE tickets SET assigned_at = CURRENT_TIMESTAMP WHERE id = ?", (ticket_id,))
+        #cur.execute("UPDATE tickets SET assigned_at = CURRENT_TIMESTAMP WHERE id = ?", (ticket_id,))
+        cur.execute("INSERT INTO tickets_assignment (ticket_id, counsellor_id, assigned_at) VALUES (?, ?, CURRENT_TIMESTAMP)", (ticket_id, handler))
         logging.debug(f"Mode: multi_counsellor - Assigned handler {handler} to ticket {ticket_id}")
     conn.commit()
     close_db(conn)
@@ -701,14 +716,15 @@ def clear_all_data():
     logging.info("Database reinitialized with schema")
     return True
 
-def add_counsellor_channel(id, channel, channel_id, order):
+def add_counsellor_channel(counsellor_id, channel, channel_id, auth_key=None, order=None):
     """add a channel to a counsellor
 
     Args:
-        id (str): counsellors' id
+        counsellor_id (str): the counsellor's id 
         channel (str): channel's name
         channel_id (str): channels' id used for sending messages
-        order (int): the rank of the channel
+        auth_key(str): auth key for the channel, default none
+        order (int): the rank of the channel, default none
     
     Returns:
         bool: True if channel was added successfully.
@@ -722,12 +738,12 @@ def add_counsellor_channel(id, channel, channel_id, order):
     try:
         conn = connect_db()
         cur = conn.cursor()
-        cur.execute("INSERT INTO channels (counsellor_id, channel, channel_id, order) VALUES (?, ?, ?, ?)",(id, channel, channel_id, order))
+        cur.execute("INSERT INTO channels (counsellor_id, channel, channel_id, auth_key, order) VALUES (?, ?, ?, ?, ?)",(counsellor_id, channel, channel_id, auth_key, order))
         conn.commit()
-        logging.info(f"Successfully added channel {channel} to counsellor {id}")
+        logging.info(f"Successfully added channel {channel} to counsellor {counsellor_id}")
         return True
     except Exception as e:
-        logging.error(f"Error adding channel to counsellor {id}: {e}")
+        logging.error(f"Error adding channel to counsellor {counsellor_id}: {e}")
         return False
 
 def get_counsellor_channels(counsellor_id):
@@ -749,28 +765,51 @@ def get_counsellor_channels(counsellor_id):
     logging.info(f"Retrieved {len(channels)} channels for counsellor: {counsellor_id}")
     return channels if channels else []
 
-def get_counsellor_channel_id(counsellor_id, channel):
+def get_counsellor_channel_id(counsellor_username, channel):
     """
     Get the channel ID for a specific counsellor and channel combination.
     
     Args:
-        counsellor_id (str): The unique identifier of the counsellor.
+        counsellor_username (str): The unique username of the counsellor.
         channel (str): The name of the channel.
         
     Returns:
         str or None: Channel ID if found, None otherwise.
     """
-    logging.debug(f"Retrieving channel ID for counsellor {counsellor_id}, channel: {channel}")
+    logging.debug(f"Retrieving channel ID for counsellor {counsellor_username}, channel: {channel}")
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute("SELECT channel_id FROM channels WHERE counsellor_id = ? AND channel = ?", (counsellor_id, channel))
+    cur.execute("SELECT channel_id FROM channels WHERE counsellor_username = ? AND channel = ?", (counsellor_username, channel))
     channel_id = cur.fetchone()
     close_db(conn)
     if channel_id:
-        logging.info(f"Found channel ID for counsellor {counsellor_id}, channel {channel}")
+        logging.info(f"Found channel ID for counsellor {counsellor_username}, channel {channel}")
     else:
-        logging.warning(f"No channel ID found for counsellor {counsellor_id}, channel {channel}")
+        logging.warning(f"No channel ID found for counsellor {counsellor_username}, channel {channel}")
     return channel_id[0] if channel_id else None
+
+def get_counsellor_token(counsellor_username, channel):
+    """Get the authorisation token for a counsellor
+
+    Args:
+        counsellor_username (str): the username of the counsellor
+        channel (str): the channel whose auth key is needed
+        
+    Returns:
+        str or None: auth_key if found, None otherwise
+    """
+    logging.debug('Retrieving counsellor: %s authorisation key for channel: %s', counsellor_username, channel)
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute("SELECT auth_key FROM channels where counsellor_username = ? AND channel = ?", (counsellor_username, channel))
+    auth_key =  cur.fetchone()
+    close_db(conn)
+    if auth_key:
+        logging.info("Auth key: %s found for counsellor_username: %s on channel: %s", auth_key, counsellor_username, channel)
+    else:
+        logging.warning("Auth key not found for counsellor: %s on channel: %s", counsellor_username, channel)
+    return auth_key[0] if auth_key else None
+
 
 if __name__ == "__main__":
     init_db()

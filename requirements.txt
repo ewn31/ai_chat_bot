@@ -1,10 +1,10 @@
 requests
 dotenv
-langchain
+langchain=0.3.27
 chromadb
-langchain-together
-langchain_community
-langchain_huggingface
+langchain-together=0.3.1
+langchain_community=0.3.77
+langchain_huggingface=0.3.1
 sentence-transformers
 unstructured
 libmagic
@@ -14,4 +14,5 @@ joblib
 gradio
 nltk
 flask
+waitress
 langdetect

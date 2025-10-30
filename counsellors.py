@@ -2,13 +2,13 @@
 from database import db
 
 
-def get_counsellors_ids():
+def get_counsellors():
     """Get a list of all counsellor IDs.
 
     Returns:
-        list: A list of counsellor IDs.
+        list: A list of counsellor usernames.
     """
-    return db.get_counsellors_ids()
+    return db.get_counsellors()
 
 def assign_counsellor(ticket, counsellor):
     """Assign a counsellor to a user.
@@ -46,24 +46,24 @@ def add_counsellor(counsellor):
     Returns:
         bool: True if the counsellor was added successfully, False otherwise.
     """
-    if 'name' not in counsellor or 'email' not in counsellor:
-        print("Provide a valid name and email")
+    if 'username' not in counsellor or 'email' not in counsellor:
+        print("Provide a valid username and email")
         return False
     
     if db.save_counsellor(counsellor):
         return True
     return False
 
-def remove_counsellor(counsellor_id):
+def remove_counsellor(counsellor):
     """Remove a counsellor.
 
     Args:
-        counsellor_id (str): The ID of the counsellor to remove.
+        counsellor (str): The username of the counsellor to remove.
 
     Returns:
         bool: True if the counsellor was removed successfully, False otherwise.
     """
-    status = db.delete_counsellor(counsellor_id)
+    status = db.delete_counsellor(counsellor)
     if status:
         return True
     return False
@@ -76,17 +76,30 @@ def list_counsellors():
     """
     return db.get_counsellors()
 
-def add_channel(counsellor_id, channel, channel_id, order):
+def add_channel(counsellor, channel, channel_id, auth_key=None, order=None):
     """Adds a channel to a counsellor
 
     Args:
-        counsellor_id (str): The ID of the counsellor to add the channel to.
+        counsellor (str): The username of the counsellor to add the channel to.
         channel (str): The name of the channel.
         channel_id (str): The id used to send messages.
+        auth_key(str): The authorisation key for the channel
         order (int): The rank of the channel.
     
     Returns:
         bool: The status of the operation
     """
 
-    return db.add_counsellor_channel(counsellor_id, channel, channel_id, order)
+    return db.add_counsellor_channel(counsellor, channel, channel_id, auth_key, order)
+
+def get_token(counsellor, channel):
+    """Gets a counsellor auth token for a channel
+
+    Args:
+        counsellor (str): the username of the counsellor
+        channel (str): channel name
+        
+    Returns:
+        auth_token (str)
+    """
+    return db.get_counsellor_token(counsellor, channel)

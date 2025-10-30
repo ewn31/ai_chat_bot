@@ -177,6 +177,14 @@ You are a {config.get('role', 'helpful assistant')}. {config.get('task', 'Answer
             prompt += "- An invitation to ask more questions\n"
             prompt += "</engagement>\n\n"
         
+        # Add output instructions
+        output_instructions = config.get('output_instructions', [])
+        if output_instructions:
+            prompt += "<output_format>\n"
+            for instruction in output_instructions:
+                prompt += f"- {instruction}\n"
+            prompt += "</output_format>\n\n"
+        
         # Add context
         prompt += f"<context>\n{context}\n</context>\n\n"
         
@@ -222,6 +230,14 @@ You are a {config.get('role', 'helpful assistant')}. {config.get('task', 'Answer
         if config.get('engagement_required'):
             prompt += "## Engagement\nALWAYS end with: follow-up question, offer related info, or invite more questions\n\n"
         
+        # Add output instructions
+        output_instructions = config.get('output_instructions', [])
+        if output_instructions:
+            prompt += "## Output Format\n"
+            for instruction in output_instructions:
+                prompt += f"- {instruction}\n"
+            prompt += "\n"
+        
         # Add context
         prompt += f"## Context\n{context}\n\n"
         
@@ -246,6 +262,14 @@ You are a {config.get('role', 'helpful assistant')}. {config.get('task', 'Answer
         
         if config.get('engagement_required'):
             prompt += "Remember to end with an engaging follow-up question.\n\n"
+        
+        # Add output instructions
+        output_instructions = config.get('output_instructions', [])
+        if output_instructions:
+            prompt += "OUTPUT FORMAT:\n"
+            for instruction in output_instructions:
+                prompt += f"- {instruction}\n"
+            prompt += "\n"
         
         prompt += f"Context:\n{context}\n\n"
         prompt += f"Conversation History:\n{history if history else 'This is the start of the conversation.'}\n\n"
