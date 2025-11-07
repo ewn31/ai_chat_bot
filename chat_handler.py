@@ -165,10 +165,11 @@ def get_ai_response(user, message):
     
 
 def send_message(user, message, sender='ai_bot'):
+    default_route = os.getenv('DEFAULT_ROUTE', 'test_route')
     if MODE == "no_counsellor":
         logging.info("Sending message to user")
         logging.debug("User: %s, Message: %s", user, message)
-        response = router.route_message("test_route", user, message)
+        response = router.route_message(default_route, user, message)
         print(f"Response from router: {response}")
         if "error" in response:
             print(f"Error sending message to {user}: {response['error']}")
@@ -179,7 +180,7 @@ def send_message(user, message, sender='ai_bot'):
     elif MODE in ["multi_counsellors_wp", "multi_counsellors_wp_web"]:
         logging.info("Sending message to user in multi-counsellor mode")
         logging.debug("User: %s, Message: %s", user, message)
-        response = router.route_message("test_route", user, message)
+        response = router.route_message(default_route, user, message)
         print(f"Response from router: {response}")
         if "error" in response:
             logging.error("Error sending message to %s: %s", user, response['error'])
