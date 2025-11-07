@@ -9,6 +9,7 @@ from langchain_together import Together
 from .intent_inference import detect_intent
 import gradio as gr
 
+
 #from summerizer import ConversationMemory
 
 
@@ -83,47 +84,6 @@ out_of_scope_message = (
 retriever = db.as_retriever()
 
 print("Welcome to your RAG chatbot! Type 'exit' or 'quit' to stop.")
-
-# while True:
-#     query = input("\nAsk a question: ")
-#     if query.lower() in ["exit", "quit"]:
-#         print("Goodbye!")
-#         break
-#     # Step 0: Detect intent
-#     intent, confidence = detect_intent(query)
-#     if intent == "escalate" and confidence > 0.5:
-#         print("Escalating to a human agent...")
-#         break  # Exit the loop to simulate escalation
-#     # Step 1: Retrieve relevant documents
-#     retrieved_docs = retriever.get_relevant_documents(query)
-#     if not retrieved_docs:  # No relevant info found
-#         print("\nAnswer:", out_of_scope_message)
-#         continue
-#     # Step 2: Collate retrieved content for context
-#     context = "\n".join(doc.page_content for doc in retrieved_docs)
-#     # Step 3: Compose prompt for the LLM (you can also add an instruction here)
-#     prompt = (
-#         "Use ONLY the following context to answer the user's question.\n"
-#         "If the answer isn't present, say: 'Sorry, I can only answer questions related to the documents you provided.'\n"
-#         f"Context:\n{context}\n\nQuestion: {query}\nAnswer:"
-#     )
-#     # Step 4: Get answer from LLM
-#     response = llm.invoke(prompt)
-#     print("\nAnswer:", response)
-# Step 5: Optional - Save conversation history or handle further logic
-# This can be done by appending to a file or database as needed.
-# import json
-# conversation_history = {
-#     "query": query,
-#     "intent": intent,
-#     "confidence": confidence,
-#     "retrieved_docs": [doc.page_content for doc in retrieved_docs],
-#     "response": response
-# }
-# with open("conversation_history.json", "a") as f:
-#     json.dump(conversation_history, f)
-#     f.write("\n")  # Newline for each conversation entry
-
 
 def build_structured_prompt(config, context, user_query, history=None):
     """

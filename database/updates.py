@@ -265,6 +265,49 @@ MIGRATIONS = [
             "ALTER TABLE channels_new RENAME TO channels"
         ]
     },
+    
+    # Migration 6: Create system_metadata table for centralized configuration
+    {
+        'version': 6,
+        'description': 'Create system_metadata table for storing system configuration, statistics, and health data',
+        'sql': [
+            """CREATE TABLE system_metadata (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category VARCHAR(50) NOT NULL,
+                key VARCHAR(100) NOT NULL,
+                value TEXT,
+                data_type VARCHAR(20) DEFAULT 'string',
+                description TEXT,
+                is_editable BOOLEAN DEFAULT 1,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(category, key)
+            )""",
+            
+            # Insert initial system configuration values
+            """INSERT INTO system_metadata (category, key, value, data_type, description, is_editable) VALUES
+                ('config', 'maintenance_mode', 'false', 'bool', 'System maintenance status', 1),
+                ('config', 'max_concurrent_tickets', '5', 'int', 'Maximum tickets per counsellor', 1),
+                ('config', 'ai_model_version', 'llama-3.1-70b', 'string', 'Current AI model in use', 1),
+                ('config', 'default_language', 'en', 'string', 'Default system language', 1),
+                ('stats', 'total_users', '0', 'int', 'Total registered users', 0),
+                ('stats', 'total_messages', '0', 'int', 'Total messages processed', 0),
+                ('stats', 'active_tickets', '0', 'int', 'Currently open tickets', 0),
+                ('health', 'db_version', '6', 'int', 'Current database schema version', 0),
+                ('health', 'last_backup', '', 'string', 'Last database backup timestamp', 0)
+            """
+        ]
+    },
+    
+    # Migration 7: Add chat_app_admin_api_key configuration
+    {
+        'version': 7,
+        'description': 'Add chat_app_admin_api_key configuration for admin actions on chat app platform',
+        'sql': [
+            """INSERT INTO system_metadata (category, key, value, data_type, description, is_editable) VALUES
+                ('config', 'chat_app_admin_api_key', '', 'string', 'Admin API key for chat app platform administrative actions', 1)
+            """
+        ]
+    },
 
     # Example Migration 3: Create a new table
     # {

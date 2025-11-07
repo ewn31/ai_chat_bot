@@ -8,5 +8,5 @@ def generate_transcript(user_id):
         user_id (str): The user's unique identifier.
     """
     conversation_history = messages.get_messages(user_id, limit=100)
-    transcript = "\n".join([f"{msg['_from']}: {msg['content']}" for msg in conversation_history])
+    transcript = "<br>".join([f"<em>{msg['_from']}</em>: {msg['content']}" for msg in conversation_history])
     return transcript

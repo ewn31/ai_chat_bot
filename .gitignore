@@ -37,7 +37,10 @@ utils/comprehensive_test.py
 utils/final_test_demo.py
 utils/sample*
 ai_bot/test*
+tests/*
 verify_channels.py
+test_system_metadata.py
+verify_new_config.py
 
 # IDE/Editor files
 .vscode/

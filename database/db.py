@@ -29,6 +29,10 @@ Functions:
     - clear_all_data(): Clear all data in the database (for testing).
     - get_counsellor_channels(counsellor_id): Get channels for a counsellor.
     - get_counsellor_channel_id(counsellor_id, channel): Get channel ID for a counsellor and channel.
+    - get_system_config(key, category): Get a system configuration value.
+    - set_system_config(key, value, category): Set a system configuration value.
+    - get_all_system_configs(category): Get all system configurations.
+    - update_system_stats(): Update system statistics (users, messages, tickets).
 """
 import datetime
 import sqlite3
@@ -310,7 +314,7 @@ def save_counsellor(counsellor):
         return False
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO counsellors (name, email) VALUES (?, ?, ?)",
+    cur.execute("INSERT INTO counsellors (name, username, email) VALUES (?, ?, ?)",
                 (counsellor['name'], counsellor['username'], counsellor['email']))
     conn.commit()
     close_db(conn)
@@ -322,7 +326,7 @@ def get_counsellors():
     Get all counsellor usernames from the database.
     
     Returns:
-        list: List of counsellors ussernames.
+        list: List of counsellors usernames.
     """
     logging.debug("Retrieving all counsellor IDs")
     conn = connect_db()
@@ -330,7 +334,7 @@ def get_counsellors():
     cur.execute("SELECT username FROM counsellors")
     usernames = [row[0] for row in cur.fetchall()]
     close_db(conn)
-    logging.info(f"Retrieved {len(ids)} counsellors usernames")
+    logging.info(f"Retrieved {len(usernames)} counsellors usernames")
     return usernames
 
 def get_counsellor(counsellor):
@@ -355,7 +359,7 @@ def get_counsellor(counsellor):
         logging.warning(f"No counsellor found with ID: {counsellor}")
     return counsellor
 
-def get_counsellors():
+def get_counsellors_details():
     """Get all the counsellors in the database
 
     Returns:
@@ -573,13 +577,14 @@ def get_memory(user_id):
     logging.info(f"Retrieved {len(result)} messages for user: {user_id}")
     return result
 
-def save_memory(message, user_id=None):
+def save_memory(message, user_id, receiver_id=None):
     """
     Save a message to the database.
     
     Args:
         message (dict): Dictionary containing message data with keys:
                        'from', 'to', 'type', 'content', 'source', 'timestamp'.
+        user_id(str): The unique identifier of the recipient (optional).
                        
     Returns:
         bool: True if message was saved successfully.
@@ -590,7 +595,7 @@ def save_memory(message, user_id=None):
             data = {
                 "id": user_id if user_id else "unknown",
                 "from": user_id if user_id else "unknown",
-                "to": "bot",
+                "to": receiver_id if receiver_id else "ai_bot",
                 "type": "text",
                 "body": message,
                 "source": "unknown",
@@ -603,7 +608,7 @@ def save_memory(message, user_id=None):
             data = get_chat_data(message)
             print(data)
         if 'to' not in data or not data['to']:
-            data['to'] = 'ai_bot'
+            data['to'] = receiver_id if receiver_id else "ai_bot"
         logging.debug(f"Saving message from: {data.get('from', 'unknown')}, message_data: {data}")
         print(f"Saving message from: {data.get('from', 'unknown')}, message_data: {data}")
         conn = connect_db()
@@ -809,6 +814,220 @@ def get_counsellor_token(counsellor_username, channel):
     else:
         logging.warning("Auth key not found for counsellor: %s on channel: %s", counsellor_username, channel)
     return auth_key[0] if auth_key else None
+
+
+# =============================================================================
+# SYSTEM METADATA FUNCTIONS
+# =============================================================================
+
+def get_system_config(key, category='config'):
+    """
+    Get a system configuration value by key.
+    
+    Args:
+        key (str): The configuration key to retrieve.
+        category (str): The category of the config (default: 'config').
+        
+    Returns:
+        The configuration value converted to appropriate type, or None if not found.
+    """
+    logging.debug(f"Retrieving system config: {category}.{key}")
+    conn = connect_db()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute(
+            "SELECT value, data_type FROM system_metadata WHERE category = ? AND key = ?",
+            (category, key)
+        )
+        result = cur.fetchone()
+        
+        if not result:
+            logging.warning(f"System config not found: {category}.{key}")
+            return None
+        
+        value, data_type = result
+        
+        # Convert value to appropriate type
+        if data_type == 'int':
+            return int(value) if value else 0
+        elif data_type == 'bool':
+            return value.lower() == 'true' if value else False
+        elif data_type == 'json':
+            import json
+            return json.loads(value) if value else None
+        else:  # string
+            return value
+            
+    except Exception as e:
+        logging.error(f"Error retrieving system config {category}.{key}: {e}")
+        return None
+    finally:
+        close_db(conn)
+
+
+def set_system_config(key, value, category='config'):
+    """
+    Set a system configuration value.
+    
+    Args:
+        key (str): The configuration key to set.
+        value: The value to set (will be converted to string).
+        category (str): The category of the config (default: 'config').
+        
+    Returns:
+        bool: True if successful, False otherwise.
+    """
+    logging.debug(f"Setting system config: {category}.{key} = {value}")
+    conn = connect_db()
+    cur = conn.cursor()
+    
+    try:
+        # Convert value to string based on type
+        if isinstance(value, bool):
+            str_value = 'true' if value else 'false'
+        else:
+            str_value = str(value)
+        
+        cur.execute(
+            """UPDATE system_metadata 
+               SET value = ?, updated_at = CURRENT_TIMESTAMP 
+               WHERE category = ? AND key = ? AND is_editable = 1""",
+            (str_value, category, key)
+        )
+        conn.commit()
+        
+        if cur.rowcount == 0:
+            logging.warning(f"System config {category}.{key} not found or not editable")
+            return False
+        
+        logging.info(f"System config updated: {category}.{key} = {value}")
+        return True
+        
+    except Exception as e:
+        logging.error(f"Error setting system config {category}.{key}: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db(conn)
+
+
+def get_all_system_configs(category=None):
+    """
+    Get all system configuration values, optionally filtered by category.
+    
+    Args:
+        category (str, optional): Filter by category. If None, returns all.
+        
+    Returns:
+        dict: Dictionary of configuration values organized by category and key.
+    """
+    logging.debug(f"Retrieving all system configs" + (f" for category: {category}" if category else ""))
+    conn = connect_db()
+    cur = conn.cursor()
+    
+    try:
+        if category:
+            cur.execute(
+                """SELECT category, key, value, data_type, description, is_editable, updated_at 
+                   FROM system_metadata WHERE category = ? ORDER BY category, key""",
+                (category,)
+            )
+        else:
+            cur.execute(
+                """SELECT category, key, value, data_type, description, is_editable, updated_at 
+                   FROM system_metadata ORDER BY category, key"""
+            )
+        
+        rows = cur.fetchall()
+        
+        # Organize by category
+        configs = {}
+        for row in rows:
+            cat, key, value, data_type, description, is_editable, updated_at = row
+            
+            if cat not in configs:
+                configs[cat] = {}
+            
+            # Convert value to appropriate type
+            if data_type == 'int':
+                typed_value = int(value) if value else 0
+            elif data_type == 'bool':
+                typed_value = value.lower() == 'true' if value else False
+            elif data_type == 'json':
+                import json
+                typed_value = json.loads(value) if value else None
+            else:
+                typed_value = value
+            
+            configs[cat][key] = {
+                'value': typed_value,
+                'data_type': data_type,
+                'description': description,
+                'is_editable': bool(is_editable),
+                'updated_at': updated_at
+            }
+        
+        logging.info(f"Retrieved {len(rows)} system config entries")
+        return configs
+        
+    except Exception as e:
+        logging.error(f"Error retrieving system configs: {e}")
+        return {}
+    finally:
+        close_db(conn)
+
+
+def update_system_stats():
+    """
+    Update system statistics (total users, messages, active tickets).
+    Should be called periodically or after significant data changes.
+    
+    Returns:
+        bool: True if successful, False otherwise.
+    """
+    logging.debug("Updating system statistics")
+    conn = connect_db()
+    cur = conn.cursor()
+    
+    try:
+        # Count total users
+        cur.execute("SELECT COUNT(*) FROM users")
+        total_users = cur.fetchone()[0]
+        
+        # Count total messages
+        cur.execute("SELECT COUNT(*) FROM messages")
+        total_messages = cur.fetchone()[0]
+        
+        # Count active tickets
+        cur.execute("SELECT COUNT(*) FROM tickets WHERE status != 'closed'")
+        active_tickets = cur.fetchone()[0]
+        
+        # Update stats in system_metadata
+        stats_to_update = [
+            ('stats', 'total_users', str(total_users)),
+            ('stats', 'total_messages', str(total_messages)),
+            ('stats', 'active_tickets', str(active_tickets))
+        ]
+        
+        for category, key, value in stats_to_update:
+            cur.execute(
+                """UPDATE system_metadata 
+                   SET value = ?, updated_at = CURRENT_TIMESTAMP 
+                   WHERE category = ? AND key = ?""",
+                (value, category, key)
+            )
+        
+        conn.commit()
+        logging.info(f"System stats updated: users={total_users}, messages={total_messages}, tickets={active_tickets}")
+        return True
+        
+    except Exception as e:
+        logging.error(f"Error updating system stats: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db(conn)
 
 
 if __name__ == "__main__":

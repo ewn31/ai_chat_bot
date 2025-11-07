@@ -14,7 +14,7 @@ Dependencies:
 
 from database import db
 
-def save_message(message):
+def save_message(message, user_id):
     """Save a message to the database.
 
     Args:
@@ -23,7 +23,7 @@ def save_message(message):
     Returns:
         bool: True if the message was saved successfully, False otherwise.
     """
-    return db.save_memory(message)
+    return db.save_memory(message, user_id)
 
 def get_messages(user_id, limit=100):
     """Get messages for a specific user.

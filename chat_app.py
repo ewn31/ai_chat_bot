@@ -133,11 +133,14 @@ def room_exist(slug, auth_token):
     except requests.RequestException as e:
         logger.error("An Error occured: %s", e)
         raise
-    logger.info("Rooms retrieved succesfully")
+    
+    logger.info("Rooms retrieved succesfully with response from chat app")
+    logger.debug("Response: %s", response)
     
     if response.status_code == 200:
         rooms_dict = response.json()
-        rooms = [room['slug'] for room in rooms_dict['room']]
+        rooms = [room['slug'] for room in rooms_dict['rooms']]
+        logger.debug("Room slugs: %s", rooms)
         return slug in rooms
     else:
         raise Exception(f"failed to check if room exists")
@@ -173,3 +176,74 @@ def send_message(room_slug, message, auth_token):
         return response.json()
     else:
         raise Exception(f"Failed to send message: {response.text}")
+    
+def generate_admin_key():
+    """Generates an admin key for the chat app"""
+    logger.info("Generating admin key")
+    SUPER_SECRET  = os.getenv("SUPER_ADMIN_SECRET", "test-super-secret-123")
+    url = f"{BASE_URL}/admin/generate-key"
+    logger.debug(f"Request URL: {url}")
+    headers = {
+        "Content-Type": "application/json",
+        "X-Super-Admin-Secret": SUPER_SECRET
+    }
+    json = {
+        "name": "Ai Chat Bot Admin platform",
+        "expires_in_days": 365
+    }
+    
+    try:
+        response = requests.post(url, json=json, headers=headers)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        logger.error(f"Error occurred: {e}")
+        raise
+    
+    logger.info("Admin key generated successfully")
+    logger.debug(f"Response: {response}")
+    
+    if response.status_code == 200:
+        return response.json().get("api_key")
+    else:
+        raise Exception(f"Failed to generate admin key: {response.text}")
+    
+def provision_counsellor_account(username, email, admin_key):
+    """Provisions a counsellor account in the chat app
+
+    Args:
+        username (str): The username of the counsellor
+        email (str): The email of the counsellor
+        admin_key (str): The admin api key for authentication
+
+    Returns:
+        str: The magic link for the counsellor account.
+    """
+    logger.info(f"Provisioning counsellor account for {username}")
+    if not username or not email:
+        raise ValueError("Username and Email cannot be empty")
+    
+    headers = {
+        "X-Admin-API-Key": admin_key,
+        "Content-Type": "application/json"
+    }
+    logger.debug(f"Headers: {headers}")
+    url = f"{BASE_URL}/admin/provision-user"
+    logger.debug(f"Request URL: {url}")
+    
+    body = {"username": username, "email": email}
+    logger.debug(f"Request body: {body}")
+    
+    try:
+        response = requests.post(url, json=body, headers=headers)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        logger.error(f"Error occurred: {e}")
+        return f'Error: {e}'
+    
+    logger.info("Counsellor account provisioned successfully")
+    logger.debug(f"Response: {response}")
+    
+    if response.status_code == 200:
+        return response.json().get("magic_link")
+    else:
+        return None

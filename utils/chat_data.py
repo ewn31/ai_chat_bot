@@ -153,6 +153,10 @@ def get_chat_data(chat):
             data_item['to'] = data_item['id']
         else:
             data_item['from'] = data_item['id']
+    elif "from" in chat:
+        data_item['from'] = chat['from']
+    if "to" in chat:
+        data_item['to'] = chat['to']
     keys_to_extract = ['status', 'type', 'source', 'timestamp',]
     for key in keys_to_extract:
         if key in chat:

@@ -16,3 +16,4 @@ nltk
 flask
 waitress
 langdetect
+gunicorn
