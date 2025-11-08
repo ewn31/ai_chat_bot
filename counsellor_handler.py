@@ -60,6 +60,9 @@ def create_counsellor(username, password, email, name=None, whatsapp_number=None
             if magic_link:
                 if "Error" in magic_link:
                     logging.error('Failed to provision counsellor account: ' + magic_link)
+                    if whatsapp_number:
+                        logger.error("Failed to provision counsellor account; sending error via WhatsApp.")
+                        res = router.route_message("default_whatsapp", f'{whatsapp_number}@s.whatsapp.net', f"Good day, your are now a counsellor for the abortion ai chat app.")
                     return
                 logging.debug(f"Magic link generated: {magic_link}")
                 msg = f"Counsellor {username} added to chat app. click on this link: {magic_link} to access the account Note: The link will expire in 7 days."
