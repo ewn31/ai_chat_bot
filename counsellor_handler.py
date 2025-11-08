@@ -7,6 +7,10 @@ import router
 import requests
 import dotenv
 
+dotenv.load_dotenv()
+
+default_route = os.getenv('DEFAULT_ROUTE', 'default_whatsapp')
+
 POSSIBLE_LOGGING_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
 
 if os.getenv('LOGGING_LEVEL').upper() not in POSSIBLE_LOGGING_LEVELS:
@@ -62,13 +66,13 @@ def create_counsellor(username, password, email, name=None, whatsapp_number=None
                     logging.error('Failed to provision counsellor account: ' + magic_link)
                     if whatsapp_number:
                         logger.error("Failed to provision counsellor account; sending error via WhatsApp.")
-                        res = router.route_message("default_whatsapp", f'{whatsapp_number}@s.whatsapp.net', f"Good day, your are now a counsellor for the abortion ai chat app.")
+                        res = router.route_message(default_route, f'{whatsapp_number}@s.whatsapp.net', f"Good day, your are now a counsellor for the abortion ai chat app.")
                     return
                 logging.debug(f"Magic link generated: {magic_link}")
                 msg = f"Counsellor {username} added to chat app. click on this link: {magic_link} to access the account Note: The link will expire in 7 days."
                 if whatsapp_number:
                     logger.info("Preparing to send magic link via WhatsApp.")
-                    res = router.route_message("default_whatsapp", f'{whatsapp_number}@s.whatsapp.net', msg)
+                    res = router.route_message(default_route, f'{whatsapp_number}@s.whatsapp.net', msg)
                     if res['error']:
                         logger.error(f"Failed to send magic link via WhatsApp: {res['error']}")
                     else:
