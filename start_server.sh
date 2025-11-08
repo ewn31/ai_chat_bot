@@ -1,3 +1,4 @@
+#!/bin/bash
 #check if gunicorn is installed, if not install it
 if ! pip show gunicorn > /dev/null 2>&1; then
     echo "gunicorn not found, installing..."
