@@ -13,6 +13,19 @@ if exist "venv\Scripts\activate.bat" (
     echo Warning: Virtual environment not found
 )
 
+REM Apply migrations
+echo Applying database migrations...
+python migrate.py apply
+
+REM Check if intent model is trained
+if not exist "ai_bot\intent_classifier.joblib" (
+    echo Intent model not found, training...
+    python ai_bot\ml_intent_detection.py
+) else if not exist "ai_bot\intent_vectorizer.joblib" (
+    echo Intent model not found, training...
+    python ai_bot\ml_intent_detection.py
+)
+
 REM Get port from .env or use default
 set PORT=80
 

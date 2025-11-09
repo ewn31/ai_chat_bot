@@ -815,6 +815,76 @@ def get_counsellor_token(counsellor_username, channel):
         logging.warning("Auth key not found for counsellor: %s on channel: %s", counsellor_username, channel)
     return auth_key[0] if auth_key else None
 
+def delete_counsellor_channel(counsellor_username, channel):
+    """Delete a channel associated with a counsellor
+
+    Args:
+        counsellor_username (str): the username of the counsellor
+        channel (str): the channel to be deleted
+    
+    Returns:
+        bool: True if channel was deleted successfully
+    """
+    logging.info(f"Deleting channel {channel} for counsellor: {counsellor_username}")
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM channels WHERE counsellor_username = ? AND channel = ?", (counsellor_username, channel))
+        conn.commit()
+        close_db(conn)
+        logging.info(f"Successfully deleted channel {channel} for counsellor: {counsellor_username}")
+        return True
+    except Exception as e:
+        logging.error(f"Error deleting channel {channel} for counsellor {counsellor_username}: {e}")
+        return False
+
+def delete_all_counsellor_channels(counsellor_username):
+    """Delete all channels associated with a counsellor
+
+    Args:
+        counsellor_username (str): the username of the counsellor
+    
+    Returns:
+        bool: True if channels were deleted successfully
+    """
+    logging.info(f"Deleting all channels for counsellor: {counsellor_username}")
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM channels WHERE counsellor_username = ?", (counsellor_username,))
+        conn.commit()
+        close_db(conn)
+        logging.info(f"Successfully deleted all channels for counsellor: {counsellor_username}")
+        return True
+    except Exception as e:
+        logging.error(f"Error deleting channels for counsellor {counsellor_username}: {e}")
+        return False
+
+def update_counsellor_channel(counsellor_username, channel, field, data):
+    """Updates a field in a counsellor's channel
+
+    Args:
+        counsellor_username (str): The username of the counsellor.
+        channel (str): The channel to update.
+        field (str): The field to update (e.g., 'auth_key', 'order').
+        data (str): The new value for the field.
+    
+    Returns:
+        status(bool):The status of the operation
+    """
+    logging.info(f"Attempting to update channel {channel} for counsellor {counsellor_username}, field: {field}")
+    conn = connect_db()
+    try:
+        cur = conn.cursor()
+        cur.execute(f"UPDATE channels SET {field} = ? WHERE counsellor_username = ? AND channel = ?", (data, counsellor_username, channel))
+        conn.commit()
+        close_db(conn)
+        logging.info(f"Successfully updated channel {channel} for counsellor {counsellor_username}, field: {field}")
+        return True
+    except Exception as e:
+        logging.error(f"Error updating channel {channel} for counsellor {counsellor_username}: {e}")
+        close_db(conn)
+        return False
 
 # =============================================================================
 # SYSTEM METADATA FUNCTIONS
