@@ -1,0 +1,49 @@
+{
+    "data": {
+        "age" : {
+            "type": "integer",
+            "min": 0,
+            "max": 120,
+            "description": "Age in years",
+            "question": "How old are you?"
+        },
+        "gender": {
+            "type": "string",
+            "enum": ["male", "female", "other"],
+            "description": "Gender of the user",
+            "question": "What is your gender?"
+        },
+        "disabilities": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": ["visual", "hearing", "motor", "cognitive", "none"]
+            },
+            "description": "List of disabilities the user has",
+            "question": "Do you have any disabilities? If so, please specify."
+        },
+        "hiv_status": {
+            "type": "string",
+            "enum": ["positive", "negative", "unknown"],
+            "description": "HIV status of the user",
+            "question": "Do you live with HIV?"
+        },
+        "location": {
+            "type": "string",
+            "description": "Geographical location of the user",
+            "question": "What town are you calling from?"
+        },
+        "last_menstrual_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the user's last menstrual period",
+            "question": "When was the first day of your last menstrual period?"
+        },
+        "marital_status": {
+            "type": "string",
+            "enum": ["single", "married", "divorced", "widowed"],
+            "description": "Marital status of the user",
+            "question": "What is your marital status?"
+        }
+    }
+}

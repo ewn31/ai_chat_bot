@@ -1,0 +1,32 @@
+[Unit]
+Description=AI Reproductive Health Chatbot Service
+After=network.target
+Documentation=https://github.com/ewn31/ai_chat_bot
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/ai_chat_bot
+Environment="PATH=/var/www/ai_chat_bot/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+
+# Start server using the project's start script
+# The script handles: migration, intent model training, and server startup
+ExecStart=/bin/bash /var/www/ai_chat_bot/start_server.sh
+
+# Restart policy
+Restart=on-failure
+RestartSec=10s
+StartLimitInterval=5min
+StartLimitBurst=5
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

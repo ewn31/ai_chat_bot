@@ -46,9 +46,11 @@ db = Chroma.from_documents(split_docs, embedding)
 # 6. Set up Together LLM
 # Model options (uncomment the one you want to use):
 
+llm_model = os.getenv("LLM", "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo")
+
 # RECOMMENDED: Best for empathetic healthcare conversations
 llm = Together(
-    model="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    model=llm_model,
     temperature=0.7,  # Higher temp for more natural, varied responses
     max_tokens=512,   # Limit response length
     top_p=0.9         # Nucleus sampling for better quality

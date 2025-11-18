@@ -308,6 +308,23 @@ MIGRATIONS = [
             """
         ]
     },
+    
+    # Migration 8: Add user demographic and health information fields
+    {
+        'version': 8,
+        'description': 'Add demographic and health fields to users table (number_of_children, location, disability, arv, internally_displaced, occupation, last_menstrual_flow, marital_status)',
+        'sql': [
+            "ALTER TABLE users ADD COLUMN age INTEGER",
+            "ALTER TABLE users ADD COLUMN number_of_children INTEGER DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN location VARCHAR(100)",
+            "ALTER TABLE users ADD COLUMN disability VARCHAR(255)",
+            "ALTER TABLE users ADD COLUMN arv BOOLEAN DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN internally_displaced BOOLEAN DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN occupation VARCHAR(100)",
+            "ALTER TABLE users ADD COLUMN last_menstrual_flow DATE",
+            "ALTER TABLE users ADD COLUMN marital_status VARCHAR(20)"
+        ]
+    },
 
     # Example Migration 3: Create a new table
     # {

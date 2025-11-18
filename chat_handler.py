@@ -9,6 +9,7 @@ import counsellors_select_algo
 import chat_app
 import ticket
 import router
+import extract_data.extract_data_with_ai as extract_data
 import dotenv
 from ai_bot.ai_bot import get_response
 from utils.summerizer import prepare_history_for_llm
@@ -24,6 +25,83 @@ GREEETINGS_EN = """Hello bestie, welcome to aunty queen connect. I’m your good
 Feel free to ask me anything. It’s private, safe, and always with care."""
 
 GREETINGS_FR = "Bienvenue! Comment puis-je vous aider aujourd'hui?"
+
+INFORMATION_DEMAND_EN = """May we have the following information?
+
+Age
+
+Gender
+
+Number of children
+
+Location
+
+Person living with a disability (blind, lame, deaf, etc.)
+
+On ARV
+
+Internally displaced
+
+Occupation
+
+Last menstrual flow
+
+Marital statuS
+
+Religion
+"""
+
+INFORMATION_DEMAND_FR = """Pourrions-nous avoir les informations suivantes ?
+
+L'âge
+
+Genre
+
+Nombre d'enfants
+
+Localisation
+
+Personne vivant avec un handicap (aveugle, boiteux, sourd, etc.)
+
+Sous ARV
+
+Déplacé interne
+
+Occupation
+
+Date des dernières règles
+
+État civil
+
+Religion
+"""
+
+INFORMATION_DEMAND = """May we have the following information?
+
+Pourrions-nous avoir les informations suivantes ?
+
+Age / L'âge
+
+Gender / Genre
+
+Number of children / Nombre d'enfants
+
+Location / Localisation
+
+Person living with a disability (blind, lame, deaf, etc.) / Personne vivant avec un handicap (aveugle, boiteux, sourd, etc.)
+
+On ARV / Sous ARV
+
+Internally displaced / Déplacé interne
+
+Occupation / Occupation
+
+Last menstrual flow / Date des dernières règles
+
+Marital status / État civil
+
+Religion / Religion
+"""
 
 MODE = os.getenv('MODE')
 print(f"MODE: {MODE}")
@@ -69,10 +147,26 @@ def incoming_messages(user, message, reciever_id=None):
                 send_message(user, GREETINGS_FR)
             else:
                 send_message(user, GREEETINGS_EN)
+            logging.debug("Changing user %s handler to on-boarder", user)
+            if users.update_user_handler(user, "on-boarder"):
+                logging.info("User %s handler changed to on-boarder successfully.", user)
+                if language == 'fr':
+                    send_message(user, INFORMATION_DEMAND_FR)
+                elif language == 'en':
+                    send_message(user, INFORMATION_DEMAND_EN)
+                else:
+                    send_message(user, INFORMATION_DEMAND)
             return
         logging.info("Saving conversation for user: %s", user)
         save_conversation(user, message)
         user_profile = get_user_profile(user)
+        if user_profile and user_profile['handler'] == "on-boarder":
+            logging.info("User %s is in on-boarder mode, skipping AI response", user)
+            extracted_data = extract_data.extract_data_with_ai(message)
+            logging.info("Extracted data for user %s: %s", user, extracted_data)
+            process_extracted_data(user, extracted_data)
+            user.update_user_handler(user, "ai_bot")
+            return
         if user_profile and user_profile['handler'] == "counsellor":
             if MODE == "no_counsellor":
                 logging.info("User %s is assigned to a counsellor, skipping AI response", user)
@@ -265,6 +359,14 @@ def get_transcript(user):
     logging.debug("transcript: %s", ts)
     return ts
 
+def process_extracted_data(user, data):
+    logging.info("Processing extracted data for user %s: %s", user, data)
+    # Implement any processing logic needed for the extracted data
+    # For example, saving to database or updating user profile
+    for key, value in data.items():
+        if value == "none" or value == "":
+            continue
+        db.update_user(user, key, value)
 
 if __name__ == "__main__":
     # Example usage
