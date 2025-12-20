@@ -162,9 +162,9 @@ def incoming_messages(user, message, reciever_id=None):
         user_profile = get_user_profile(user)
         if user_profile and user_profile['handler'] == "on-boarder":
             logging.info("User %s is in on-boarder mode, skipping AI response", user)
-            #extracted_data = extract_data.extract_data_with_ai(message)
-            #logging.info("Extracted data for user %s: %s", user, extracted_data)
-            #process_extracted_data(user, extracted_data)
+            extracted_data = extract_data.extract_data_with_ai(message)
+            logging.info("Extracted data for user %s: %s", user, extracted_data)
+            process_extracted_data(user, extracted_data)
             users.update_user_handler(user, "ai_bot")
             return
         if user_profile and user_profile['handler'] == "counsellor":
