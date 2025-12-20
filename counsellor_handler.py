@@ -9,7 +9,7 @@ import dotenv
 
 dotenv.load_dotenv()
 
-default_route = os.getenv('DEFAULT_ROUTE', 'default_whatsapp')
+default_route = os.getenv('DEFAULT_ROUTE', 'test_route')
 
 POSSIBLE_LOGGING_LEVELS = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
 

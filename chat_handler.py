@@ -162,10 +162,10 @@ def incoming_messages(user, message, reciever_id=None):
         user_profile = get_user_profile(user)
         if user_profile and user_profile['handler'] == "on-boarder":
             logging.info("User %s is in on-boarder mode, skipping AI response", user)
-            extracted_data = extract_data.extract_data_with_ai(message)
-            logging.info("Extracted data for user %s: %s", user, extracted_data)
-            process_extracted_data(user, extracted_data)
-            user.update_user_handler(user, "ai_bot")
+            #extracted_data = extract_data.extract_data_with_ai(message)
+            #logging.info("Extracted data for user %s: %s", user, extracted_data)
+            #process_extracted_data(user, extracted_data)
+            users.update_user_handler(user, "ai_bot")
             return
         if user_profile and user_profile['handler'] == "counsellor":
             if MODE == "no_counsellor":
@@ -181,15 +181,24 @@ def incoming_messages(user, message, reciever_id=None):
                 handler_agent = get_handler_agent(user)
                 room_slug = f'wa_{user}_{handler_agent}'
                 auth_token = users.get_user_profile(user)['auth_key']
+                if auth_token is None:
+                    logging.info("Auth token not found for user %s, generating a new one", user)
+                    try:
+                        fresh_token = chat_app.create_user_token(user)  
+                    except Exception as e:
+                        logging.error("Failed to create user token for user %s: %s", user, e)
+                        return
+                    users.update_user(user, "auth_key", fresh_token)
+                    auth_token = users.get_user_profile(user)['auth_key']
                 #checking if room exist
-                if chat_app.room_exist(room_slug, auth_token):
-                    msg_body = get_chat_data(message)['body']
-                    response = chat_app.send_message(room_slug, msg_body, auth_token)
-                    if response.get("error"):
-                        logging.error("Failed to send message to room %s: %s", room_slug, response['error'])
-                    return
-                else:
-                    logging.warn("No room exist to send message")
+                #if chat_app.room_exist(room_slug, auth_token):
+                msg_body = get_chat_data(message)['body']
+                response = chat_app.send_message(room_slug, msg_body, auth_token)
+                if response.get("error"):
+                    logging.error("Failed to send message to room %s: %s", room_slug, response['error'])
+                return
+                #else:
+                    #logging.warn("No room exist to send message")
             else:   
                 print("Invalid MODE. Please set MODE to 'no_counsellor', 'single_counsellor', or 'multi_counsellor'.")
                 return
@@ -281,6 +290,7 @@ def send_message(user, message, sender='ai_bot'):
         else:
             logging.info("Message sent successfully to user: %s", user)
             save_conversation(sender, response, user)
+
 def notify_counsellor(user, counsellor_id, ticket_id):
     logging.info("Notifying counsellor %s about ticket %s", counsellor_id, ticket_id)
     # Implement notification logic here (e.g., send email or message)
@@ -366,7 +376,8 @@ def process_extracted_data(user, data):
     for key, value in data.items():
         if value == "none" or value == "":
             continue
-        db.update_user(user, key, value)
+        print(f"Updating user {user} data: {key} = {value}")
+        #db.update_user(user, key, value)
 
 if __name__ == "__main__":
     # Example usage

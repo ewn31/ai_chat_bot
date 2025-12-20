@@ -18,4 +18,6 @@ def round_robin():
 
     # Calculate the next index in a round-robin fashion
     round_robin.last_index = (round_robin.last_index + 1) % len(counsellor_list)
-    return counsellor_list[round_robin.last_index]['username']
+    print('Counsellor list:', counsellor_list)
+    print('Selected counsellor index:', round_robin.last_index)
+    return counsellor_list[round_robin.last_index]

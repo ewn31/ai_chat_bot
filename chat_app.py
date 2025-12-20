@@ -180,7 +180,7 @@ def send_message(room_slug, message, auth_token):
 def generate_admin_key():
     """Generates an admin key for the chat app"""
     logger.info("Generating admin key")
-    SUPER_SECRET  = os.getenv("SUPER_ADMIN_SECRET", "test-super-secret-123")
+    SUPER_SECRET  = os.getenv("SUPER_ADMIN_SECRET", "MYHOPEISJESUS")
     url = f"{BASE_URL}/admin/generate-key"
     logger.debug(f"Request URL: {url}")
     headers = {

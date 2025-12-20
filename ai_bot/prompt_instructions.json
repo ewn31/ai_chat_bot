@@ -21,6 +21,7 @@
   "output_instructions": [
     "Respond ONLY in plain text without any XML tags",
     "Do NOT include tags like </response> or any other markup in your output",
+    "Do Not use </response> at the ens of the output",
     "Output natural conversational text directly"
   ],
   

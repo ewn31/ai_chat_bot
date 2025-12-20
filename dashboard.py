@@ -583,7 +583,7 @@ def build_dashboard():
     with gr.Blocks(title="AI Chatbot Admin Dashboard", theme=gr.themes.Soft()) as dashboard:
         
         gr.Markdown("""
-        # 🤖 AI Chatbot Admin Dashboard
+        #AI Chatbot Admin Dashboard
         ### Manage counsellors, monitor tickets, and configure system settings
         """)
         
