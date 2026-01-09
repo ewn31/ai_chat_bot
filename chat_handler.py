@@ -26,82 +26,49 @@ Feel free to ask me anything. It’s private, safe, and always with care."""
 
 GREETINGS_FR = "Bienvenue! Comment puis-je vous aider aujourd'hui?"
 
-INFORMATION_DEMAND_EN = """May we have the following information?
+INFORMATION_DEMAND_EN = """To provide you the best care, we need some information. This takes 2-3 minutes.
 
-Age
+🔒 *Your privacy is protected* - all information is confidential.
 
-Gender
+Please reply with your answers, one per message:
 
-Number of children
+1. Your age
+2. Your gender (Male/Female/Other)
+3. Number of children (or 0)
+4. Your city/location
+5. Any disabilities or health conditions (or 'none')
+6. Are you on ARV medication? (Yes/No)
+7. Are you displaced from home? (Yes/No)
+8. Your occupation
+9. Last menstrual period (if applicable, or 'skip')
+10. Marital status (or 'skip')
+11. Religious background (or 'skip')
 
-Location
+💡 You can reply 'skip' to any question.
 
-Person living with a disability (blind, lame, deaf, etc.)
+*Ready? Please send your age first.*"""
 
-On ARV
+INFORMATION_DEMAND_FR = """Bonjour ! Pour vous fournir les meilleurs soins, nous avons besoin de quelques informations. Cela prend 2-3 minutes.
 
-Internally displaced
+🔒 *Votre vie privée est protégée* - toutes les informations sont confidentielles.
 
-Occupation
+Veuillez répondre avec vos réponses, une par message :
 
-Last menstrual flow
+1. Votre âge
+2. Votre genre (Homme/Femme/Autre)
+3. Nombre d'enfants (ou 0)
+4. Votre ville/localisation
+5. Handicaps ou problèmes de santé (ou 'aucun')
+6. Prenez-vous des ARV ? (Oui/Non)
+7. Êtes-vous déplacé(e) ? (Oui/Non)
+8. Votre profession
+9. Dernières règles (si applicable, ou 'skip')
+10. État civil (ou 'skip')
+11. Religion (ou 'skip')
 
-Marital statuS
+💡 Vous pouvez répondre 'skip' à toute question.
 
-Religion
-"""
-
-INFORMATION_DEMAND_FR = """Pourrions-nous avoir les informations suivantes ?
-
-L'âge
-
-Genre
-
-Nombre d'enfants
-
-Localisation
-
-Personne vivant avec un handicap (aveugle, boiteux, sourd, etc.)
-
-Sous ARV
-
-Déplacé interne
-
-Occupation
-
-Date des dernières règles
-
-État civil
-
-Religion
-"""
-
-INFORMATION_DEMAND = """May we have the following information?
-
-Pourrions-nous avoir les informations suivantes ?
-
-Age / L'âge
-
-Gender / Genre
-
-Number of children / Nombre d'enfants
-
-Location / Localisation
-
-Person living with a disability (blind, lame, deaf, etc.) / Personne vivant avec un handicap (aveugle, boiteux, sourd, etc.)
-
-On ARV / Sous ARV
-
-Internally displaced / Déplacé interne
-
-Occupation / Occupation
-
-Last menstrual flow / Date des dernières règles
-
-Marital status / État civil
-
-Religion / Religion
-"""
+*Prêt(e) ? Envoyez d'abord votre âge.*"""
 
 MODE = os.getenv('MODE')
 print(f"MODE: {MODE}")
