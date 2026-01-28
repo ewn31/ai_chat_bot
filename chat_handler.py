@@ -311,6 +311,9 @@ def get_user_profile(user):
     logging.info("Getting user info")
     user_profile = db.get_user_profile(user)
     logging.debug("User profile: %s", user_profile)
+    # Convert sqlite3.Row to dict for easier access
+    if user_profile:
+        return dict(user_profile)
     return user_profile
 
 def get_ai_response(user, message, language):
