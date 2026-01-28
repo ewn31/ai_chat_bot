@@ -17,7 +17,7 @@ else:
 
 
 def set_next_question(question_list:dict, current_qusetion:str):
-    questions:list = question_list.keys()
+    questions:list = list(question_list.keys())
     if current_qusetion == None:
         return questions[0]
     index_of_question = questions.index(current_qusetion)
