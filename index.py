@@ -43,15 +43,27 @@ def handle_new_messages():
                 incoming_messages(user_id, message)
             #To do complete handling of other message types
             elif response_type == 'reply':
-                reply =  message.get('reply')
-                print('reply-object: ', reply.get('type')=='buttons_reply' )
+                reply = message.get('reply')
+                print('reply-object: ', reply.get('type')=='buttons_reply')
                 if reply.get('type') == 'buttons_reply':
                     buttons_reply = reply.get('buttons_reply')
                     button_id = buttons_reply.get('id')
-                    print('button_id: ',button_id)
-                    _, user_response = button_id.split(':')
-                    print(user_response)
-                    #handler(bots, user_response, user_id)
+                    button_title = buttons_reply.get('title', '')
+
+                    print('button_id:', button_id)
+                    print('button_title:', button_title)
+
+                    # Create a properly formatted message object for incoming_messages
+                    # Include both the button ID and the button text
+                    button_message = {
+                        'type': 'text',
+                        'text': {
+                            'body': button_title  # The visible text on the button
+                        },
+                        'id': button_id  # The button ID for identification
+                    }
+
+                    incoming_messages(user_id, button_message)
             elif response_type == 'unknown':
                 continue
             else:

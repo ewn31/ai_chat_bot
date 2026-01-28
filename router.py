@@ -36,6 +36,7 @@ import requests
 import logging
 import os
 import dotenv
+from requests_toolbelt import MultipartEncoder
 
 # Load environment variables
 dotenv.load_dotenv()
@@ -134,9 +135,30 @@ def route_message(route_name, user_id, message, message_type="text", max_retries
                 'Authorization': f"Bearer {token}",
                 'Content-Type': 'application/json'
             }
+            
 
             url = f"{api_url}/{endpoint}"
-            payload = {'body': message}
+            if message_type == 'text':
+                payload = {'body': message}
+            elif message_type == 'media' or message_type == 'image' or message_type == 'file':
+                # Split the media path and MIME type for image
+                image_path, mime_type = payload.pop('media').split(';')
+        
+                with open(image_path, 'rb') as image_file:
+                    # Create a MultipartEncoder for the file upload
+                    m = MultipartEncoder(
+                        fields={
+                            **payload,
+                            'media': (image_path, image_file, mime_type)
+                        }
+                    )
+                    headers['Content-Type'] = m.content_type
+            elif message_type == 'options':
+                payload = {
+                    'body': message['body'],
+                    'action': message['action'],
+                    'type': message.get('type', 'button')
+                }
             payload['to'] = user_id
             
             logging.debug(f"Prepared request to {url}")

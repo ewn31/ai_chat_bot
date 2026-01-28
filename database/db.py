@@ -1099,6 +1099,130 @@ def update_system_stats():
     finally:
         close_db(conn)
 
+def get_user_data_collection_stage(user_id):
+    """
+    Get the data collection stage for a specific user.
+    
+    Args:
+        user_id (str): The unique identifier of the user.
+    Returns:
+        str or None: The data collection stage if found, None otherwise.
+    """
+    logging.debug(f"Retrieving data collection stage for user: {user_id}")
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute("SELECT stage FROM user_data_collection_stages WHERE user_id = ?", (user_id,))
+    result = cur.fetchone()
+    close_db(conn)
+    if result:
+        logging.info(f"Data collection stage for user {user_id}: {result[0]}")
+        return result[0]
+    else:
+        logging.warning(f"No data collection stage found for user: {user_id}")
+        return None
+
+def set_user_data_collection_stage(user_id, stage):
+    """
+    Set the data collection stage for a specific user.
+    
+    Args:
+        user_id (str): The unique identifier of the user.
+        stage (str): The data collection stage to set.
+    Returns:
+        bool: True if stage was set successfully, False otherwise.
+    """    
+    logging.debug(f"Setting data collection stage for user {user_id} to: {stage}")
+    conn = connect_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """INSERT INTO user_data_collection_stages (user_id, stage) 
+               VALUES (?, ?)
+            """,
+            (user_id, stage)
+        )
+        conn.commit()
+        logging.info(f"Successfully set data collection stage for user {user_id} to: {stage}")
+        return True
+    except Exception as e:
+        logging.error(f"Error setting data collection stage for user {user_id}: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db(conn)
+
+def is_user_in_data_collection(user_id):
+    """
+    Check if a user is currently in the data collection process.
+    
+    Args:
+        user_id (str): The unique identifier of the user.
+    Returns:
+        bool: True if user is in data collection, False otherwise.
+    """    
+    logging.debug(f"Checking if user {user_id} is in data collection")
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM user_data_collection_stages WHERE user_id = ?", (user_id,))
+    result = cur.fetchone()
+    close_db(conn)
+    in_collection = result is not None
+    logging.info(f"User {user_id} in data collection: {in_collection}")
+    return in_collection
+
+def set_user_data_collection_complete(user_id):
+    """
+    Mark a user's data collection process as complete by removing their entry.
+    
+    Args:
+        user_id (str): The unique identifier of the user.
+    Returns:
+        bool: True if user was marked complete successfully, False otherwise.
+    """
+    logging.debug(f"Marking data collection complete for user: {user_id}")
+    conn = connect_db()
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE user_data_collection_stages SET complete = TRUE WHERE user_id = ?", (user_id,))
+        conn.commit()
+        logging.info(f"Successfully marked data collection complete for user: {user_id}")
+        return True
+    except Exception as e:
+        logging.error(f"Error marking data collection complete for user {user_id}: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db(conn)
+
+def add_user_to_data_collection(user_id, stage):
+    """
+    Add a user to the data collection process with a specified stage.
+    
+    Args:
+        user_id (str): The unique identifier of the user.
+        stage (str): The data collection stage to set.
+    Returns:
+        bool: True if user was added successfully, False otherwise.
+    """
+    logging.debug(f"Adding user {user_id} to data collection at stage: {stage}")
+    conn = connect_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """INSERT INTO user_data_collection_stages (user_id, stage, completed) 
+               VALUES (?, ?, FALSE)
+            """,
+            (user_id, stage)
+        )
+        conn.commit()
+        logging.info(f"Successfully added user {user_id} to data collection at stage: {stage}")
+        return True
+    except Exception as e:
+        logging.error(f"Error adding user {user_id} to data collection: {e}")
+        conn.rollback()
+        return False
+    finally:
+        close_db(conn)
 
 if __name__ == "__main__":
     init_db()

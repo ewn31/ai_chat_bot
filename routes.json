@@ -5,7 +5,11 @@
         "api_token": "qqzjkILSTfrV3eLZdeiDE5DrRftgk0EB",
         "endpoint": {
             "text": "messages/text",
-            "image": "messages/image"
+            "image": "messages/image",
+            "document": "messages/document",
+            "audio": "messages/audio",
+            "video": "messages/video",
+            "options": "messages/interactive"
         }
     },
 
@@ -15,7 +19,11 @@
         "api_token": "WMyMhrLCKZddmPpS8eVcnlixG3jCRqSo",
         "endpoint": {
             "text": "messages/text",
-            "image": "messages/image"
+            "image": "messages/image",
+            "document": "messages/document",
+            "audio": "messages/audio",
+            "video": "messages/video",
+            "options": "messages/interactive"
         }
     }
 }

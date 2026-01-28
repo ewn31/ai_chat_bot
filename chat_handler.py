@@ -9,12 +9,13 @@ import counsellors_select_algo
 import chat_app
 import ticket
 import router
-import extract_data.extract_data_with_ai as extract_data
+#import extract_data.extract_data_with_ai as extract_data
 import dotenv
 from ai_bot.ai_bot import get_response
 from utils.summerizer import prepare_history_for_llm
 from utils.chat_data import get_chat_data
 from language_dectector.language_detector import detect_language
+import data_extractor
 
 dotenv.load_dotenv()
 
@@ -25,6 +26,10 @@ GREEETINGS_EN = """Hello bestie, welcome to aunty queen connect. I’m your good
 Feel free to ask me anything. It’s private, safe, and always with care."""
 
 GREETINGS_FR = "Bienvenue! Comment puis-je vous aider aujourd'hui?"
+
+LANGUAGE_SELECTION_PROMPT = """Hello / Bonjour 👋
+
+Please select your preferred language / Veuillez sélectionner votre langue préférée:"""
 
 INFORMATION_DEMAND_EN = """To provide you the best care, we need some information. This takes 2-3 minutes.
 
@@ -101,39 +106,126 @@ def incoming_messages(user, message, reciever_id=None):
         logging.debug('mode: %s', MODE)
         logging.debug('User: %s, Message: %s', user, message)
         logging.debug("Checking if message is from a first-time user...")
-        language = detect_language(get_chat_data(message)['body'])
         if first_time_user(user):
             logging.info("First time user detected: %s", user)
             register_user(user)
             logging.info("User %s registered successfully.", user)
             save_conversation(user, message)
-            #language = detect_language(get_chat_data(message)['body'])
-            logging.info("Detected language for user %s: %s", user, language)
-            logging.info("Sending welcome message to user: %s", user)
-            if language == 'fr':
-                send_message(user, GREETINGS_FR)
-            else:
-                send_message(user, GREEETINGS_EN)
             logging.debug("Changing user %s handler to on-boarder", user)
             if users.update_user_handler(user, "on-boarder"):
                 logging.info("User %s handler changed to on-boarder successfully.", user)
-                if language == 'fr':
-                    send_message(user, INFORMATION_DEMAND_FR)
-                elif language == 'en':
-                    send_message(user, INFORMATION_DEMAND_EN)
-                else:
-                    send_message(user, INFORMATION_DEMAND)
+            # Send language selection buttons
+            send_language_selection(user)
             return
         logging.info("Saving conversation for user: %s", user)
         save_conversation(user, message)
         user_profile = get_user_profile(user)
         if user_profile and user_profile['handler'] == "on-boarder":
-            logging.info("User %s is in on-boarder mode, skipping AI response", user)
-            extracted_data = extract_data.extract_data_with_ai(message)
-            logging.info("Extracted data for user %s: %s", user, extracted_data)
-            process_extracted_data(user, extracted_data)
-            users.update_user_handler(user, "ai_bot")
-            return
+            # Check if language has been set
+            user_language = user_profile.get('language')
+
+            if not user_language:
+                # This is the language selection response
+                logging.info("Processing language selection for user: %s", user)
+                msg_data = get_chat_data(message)
+                user_input = msg_data.get('body', '').lower().strip()
+
+                # Check for button response (has 'button_id' field in button replies)
+                selected_language = 'en'  # Default
+
+                # Try to parse button ID (format: lang_en or lang_fr)
+                if 'button_id' in msg_data and msg_data['button_id'].startswith('lang_'):
+                    selected_language = msg_data['button_id'].split('_')[1]
+                    logging.info("Language selected via button: %s", selected_language)
+                # Check text response
+                elif 'français' in user_input or 'francais' in user_input or user_input == 'fr':
+                    selected_language = 'fr'
+                    logging.info("Language selected via text (French): %s", user_input)
+                elif 'english' in user_input or user_input == 'en':
+                    selected_language = 'en'
+                    logging.info("Language selected via text (English): %s", user_input)
+                else:
+                    # Try to detect from message
+                    selected_language = detect_language(user_input, default='en')
+                    logging.info("Language detected from message: %s", selected_language)
+
+                # Store selected language
+                users.update_user(user, "language", selected_language)
+                logging.info("Stored language preference for user %s: %s", user, selected_language)
+
+                # Send welcome message in selected language
+                if selected_language == 'fr':
+                    send_message(user, GREETINGS_FR)
+                else:
+                    send_message(user, GREEETINGS_EN)
+
+                # Initialize onboarding - set first question
+                questions_obj = data_extractor.load_question_list("user_data.json")
+                first_question = data_extractor.set_next_question(questions_obj, None)
+                users.update_user(user, "onboarding_level", first_question)
+                logging.info("Initialized onboarding for user %s with first question: %s", user, first_question)
+
+                return
+
+            # Language is set, proceed with onboarding questions
+            current_question = user_profile['onboarding_level']
+
+            # If there's a current question, this message is the answer to it
+            if current_question:
+                msg_data = get_chat_data(message)
+                user_answer = msg_data.get('body', '').strip()
+
+                # Save the answer to the appropriate field
+                logging.info("Saving answer for question '%s' from user %s: %s", current_question, user, user_answer)
+
+                # Map question keys to database fields
+                field_mapping = {
+                    'age': 'age',
+                    'gender': 'gender',
+                    'children': 'number_of_children',
+                    'location': 'location',
+                    'disabilities': 'disability',
+                    'arv_medication': 'arv',
+                    'displaced': 'internally_displaced',
+                    'occupation': 'occupation',
+                    'last_menstrual_period': 'last_menstrual_flow',
+                    'marital_status': 'marital_status',
+                    'religious_background': 'religious_background'
+                }
+
+                db_field = field_mapping.get(current_question)
+                if db_field:
+                    # Don't save if user skipped or preferred not to say
+                    skip_values = ['skip', 'passer', 'prefer not to say', 'préfère ne pas dire']
+                    if user_answer.lower() not in skip_values:
+                        users.update_user(user, db_field, user_answer)
+                        logging.info("Saved %s = %s for user %s", db_field, user_answer, user)
+                    else:
+                        logging.info("User %s skipped question: %s", user, current_question)
+
+            # Send next question
+            questions_obj = data_extractor.load_question_list("user_data.json")
+            next_question = data_extractor.set_next_question(questions_obj, current_question)
+
+            if next_question == 'Done':
+                logging.info("Onboarding complete for user: %s", user)
+                users.update_user_handler(user, "ai_bot")
+                # Send completion message in user's language
+                completion_msg = {
+                    'en': "Your information is safe and confidential. How can we help you?",
+                    'fr': "Vos informations sont sûres et confidentielles. Comment pouvons-nous vous aider ?"
+                }
+                send_message(user, completion_msg.get(user_language, completion_msg['en']))
+                return
+
+            # Update to next question and send it
+            users.update_user(user, "onboarding_level", next_question)
+            logging.debug("Updated onboarding level to: %s for user: %s", next_question, user)
+
+            question, options = data_extractor.message_builder(questions_obj, next_question, user_language)
+            data_extractor.send_question(user, question, options)
+                
+                
         if user_profile and user_profile['handler'] == "counsellor":
             if MODE == "no_counsellor":
                 logging.info("User %s is assigned to a counsellor, skipping AI response", user)
@@ -170,13 +262,14 @@ def incoming_messages(user, message, reciever_id=None):
                 print("Invalid MODE. Please set MODE to 'no_counsellor', 'single_counsellor', or 'multi_counsellor'.")
                 return
         user_message = get_chat_data(message)['body']
-        ai_response = get_ai_response(user, user_message)
+        ai_response = get_ai_response(user, user_message, user_profile['language'])
         if ai_response is None:
             pass
         if ai_response == "Escalating to a counsellor...":
             #user_transcript = get_transcript(user)
             escalate_to_counsellor(user)
-            notify_user_counsellor_assigned(user, language)
+            notify_user_counsellor_assigned(user, user_profile['language'])
+            send_message(user, "Due to the sensitive nature of your message, you have been connected to a counsellor. They will be with you shortly.")
         else:
             print(f"AI response to {user}: {ai_response}")
             send_message(user, ai_response)
@@ -220,7 +313,7 @@ def get_user_profile(user):
     logging.debug("User profile: %s", user_profile)
     return user_profile
 
-def get_ai_response(user, message):
+def get_ai_response(user, message, language):
     logging.info("Getting message from db")
     memories = db.get_memory(user)
     logging.debug("User messages: %s", memories )
@@ -229,7 +322,7 @@ def get_ai_response(user, message):
     history =  prepare_history_for_llm(msgs)
     logging.debug("Prepared history: %s", history)
     logging.info("Getting response from llm")
-    llm_response =  get_response(message, history)
+    llm_response =  get_response(message, language, history)
     logging.debug("response fromm llm: %s", llm_response)
     return llm_response
     
@@ -345,6 +438,42 @@ def process_extracted_data(user, data):
             continue
         print(f"Updating user {user} data: {key} = {value}")
         #db.update_user(user, key, value)
+
+def send_language_selection(user):
+    """Send language selection buttons to user."""
+    logging.info("Sending language selection to user: %s", user)
+
+    # Create Whapi-compatible button message
+    language_options = {
+        'body': {'text': LANGUAGE_SELECTION_PROMPT},
+        'action': {
+            'buttons': [
+                {
+                    'type': 'quick_reply',
+                    'title': 'English 🇬🇧',
+                    'id': 'lang_en'
+                },
+                {
+                    'type': 'quick_reply',
+                    'title': 'Français 🇫🇷',
+                    'id': 'lang_fr'
+                }
+            ]
+        },
+        'type': 'button'
+    }
+
+    default_route = os.getenv('DEFAULT_ROUTE', 'test_route')
+    response = router.route_message(default_route, user, language_options, "options")
+
+    if "error" in response:
+        logging.error("Error sending language selection to %s: %s", user, response['error'])
+        # Fallback to text message
+        send_message(user, LANGUAGE_SELECTION_PROMPT + "\n\nReply 'English' or 'Français'")
+    else:
+        logging.info("Language selection sent successfully to user: %s", user)
+
+    return response
 
 if __name__ == "__main__":
     # Example usage

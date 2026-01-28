@@ -325,6 +325,40 @@ MIGRATIONS = [
             "ALTER TABLE users ADD COLUMN marital_status VARCHAR(20)"
         ]
     },
+    
+    #Migration 9: Add a table that tracks stage of users in the data collection process
+    {
+        'version': 9,
+        'description': 'Add user_data_collection_stages table to track user data collection progress',
+        'sql': [
+            """CREATE TABLE user_data_collection_stages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL REFERENCES users(id),
+                stage VARCHAR(50) NOT NULL,
+                completed BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )"""
+        ]
+    },
+
+    # Migration 10: Add onboarding_level field to track current question in onboarding
+    {
+        'version': 10,
+        'description': 'Add onboarding_level field to users table for tracking onboarding progress',
+        'sql': [
+            "ALTER TABLE users ADD COLUMN onboarding_level VARCHAR(50)"
+        ]
+    },
+
+    # Migration 11: Add religious_background field to users table
+    {
+        'version': 11,
+        'description': 'Add religious_background field to users table',
+        'sql': [
+            "ALTER TABLE users ADD COLUMN religious_background VARCHAR(50)"
+        ]
+    },
 
     # Example Migration 3: Create a new table
     # {

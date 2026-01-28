@@ -171,10 +171,18 @@ def get_chat_data(chat):
         type_of_chat = chat['type']
         if type_of_chat == 'text':
             data_item['body'] = chat[type_of_chat]['body']
+            # Check if this is a button message with an 'id' field
+            if 'id' in chat:
+                data_item['button_id'] = chat['id']
         elif type_of_chat == 'document':
             data_item['body'] = chat[type_of_chat]['filename']
         elif type_of_chat == 'reply':
-            data_item['body'] = chat[type_of_chat]['buttons_reply']['title']
+            # Extract both button title and button ID
+            buttons_reply = chat[type_of_chat].get('buttons_reply', {})
+            data_item['body'] = buttons_reply.get('title', '')
+            # Store button ID separately so it doesn't conflict with chat_id
+            if 'id' in buttons_reply:
+                data_item['button_id'] = buttons_reply['id']
         elif type_of_chat == 'interactive':
             data_item['body'] = chat[type_of_chat]['body']
     return data_item

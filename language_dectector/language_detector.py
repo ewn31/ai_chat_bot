@@ -24,17 +24,18 @@ DetectorFactory.seed = 0
 logger = logging.getLogger(__name__)
 
 
-def detect_language(text, default='en'):
+def detect_language(text, default='en', min_confidence=0.7):
     """
-    Detect the language of the given text.
-    
+    Detect the language of the given text with enhanced short-text handling.
+
     Args:
         text (str): Text to detect language from
         default (str): Default language code to return if detection fails
-        
+        min_confidence (float): Minimum confidence threshold (0.0 to 1.0)
+
     Returns:
         str: ISO 639-1 language code (e.g., 'en', 'es', 'fr', 'sw')
-        
+
     Examples:
         >>> detect_language("Hello, how are you?")
         'en'
@@ -44,16 +45,71 @@ def detect_language(text, default='en'):
         'sw'
     """
     try:
-        # Handle empty or very short text
-        if not text or len(text.strip()) < 3:
-            logger.warning(f"Text too short for detection: '{text}'. Returning default: {default}")
+        # Handle empty text
+        if not text or len(text.strip()) < 1:
+            logger.warning(f"Empty text. Returning default: {default}")
             return default
-        
-        # Detect language
-        lang = detect(text)
-        logger.debug(f"Detected language '{lang}' for text: '{text[:50]}...'")
-        return lang
-        
+
+        # Normalize text for keyword matching
+        normalized_text = text.lower().strip()
+
+        # Keyword-based detection for very short texts (common greetings and words)
+        french_keywords = {
+            'bonjour', 'salut', 'bonsoir', 'merci', 'oui', 'non', 'comment',
+            'aide', 'besoin', 'enceinte', 'avortement', 'grossesse', 'règles',
+            'svp', 's\'il', 'sil', 'vous', 'plaît', 'allô', 'allo', 'bsr', 'bjr',
+            'je', 'tu', 'nous', 'mes', 'ça', 'ca', 'alors', 'quoi', 'pourquoi',
+            'comment', 'quand', 'où', 'qui', 'combien'
+        }
+
+        english_keywords = {
+            'hello', 'hi', 'hey', 'thanks', 'thank', 'yes', 'no', 'how',
+            'help', 'need', 'pregnant', 'abortion', 'pregnancy', 'period',
+            'please', 'pls', 'what', 'why', 'when', 'where', 'who', 'how'
+        }
+
+        # Check if any word in the text matches keywords
+        words = normalized_text.split()
+        for word in words:
+            # Remove common punctuation
+            clean_word = word.strip('.,!?;:()')
+            if clean_word in french_keywords:
+                logger.info(f"Detected French keyword '{clean_word}' in text: '{text[:50]}...'")
+                return 'fr'
+            elif clean_word in english_keywords:
+                logger.info(f"Detected English keyword '{clean_word}' in text: '{text[:50]}...'")
+                return 'en'
+
+        # For texts less than 10 characters, use langdetect with caution
+        if len(text.strip()) < 10:
+            logger.warning(f"Text is short ({len(text)} chars), detection may be unreliable: '{text}'")
+
+        # Use langdetect with confidence check
+        try:
+            langs = detect_langs(text)
+            if langs:
+                top_lang = langs[0]
+                lang_code = top_lang.lang
+                confidence = top_lang.prob
+
+                logger.debug(f"Detected language '{lang_code}' with confidence {confidence:.4f} for text: '{text[:50]}...'")
+
+                # Only return detected language if confidence is above threshold
+                if confidence >= min_confidence:
+                    return lang_code
+                else:
+                    logger.warning(f"Confidence {confidence:.4f} below threshold {min_confidence}. Returning default: {default}")
+                    return default
+            else:
+                logger.warning(f"No language detected. Returning default: {default}")
+                return default
+
+        except LangDetectException:
+            # If langdetect fails, try simple detect
+            lang = detect(text)
+            logger.debug(f"Detected language '{lang}' (fallback) for text: '{text[:50]}...'")
+            return lang
+
     except LangDetectException as e:
         logger.warning(f"Language detection failed for text: '{text[:50]}...'. Error: {e}. Returning default: {default}")
         return default
@@ -171,16 +227,50 @@ def is_language(text, expected_lang, threshold=0.9):
         return False
 
 
+def detect_language_from_messages(messages, default='en'):
+    """
+    Detect language from multiple messages by combining them.
+    More accurate for short individual messages.
+
+    Args:
+        messages (list): List of message strings
+        default (str): Default language code to return if detection fails
+
+    Returns:
+        str: ISO 639-1 language code
+
+    Examples:
+        >>> detect_language_from_messages(["Hi", "How are you", "Need help"])
+        'en'
+    """
+    try:
+        if not messages:
+            return default
+
+        # Combine messages with spaces
+        combined_text = ' '.join(str(msg) for msg in messages if msg)
+
+        if not combined_text.strip():
+            return default
+
+        # Use regular detection on combined text
+        return detect_language(combined_text, default)
+
+    except Exception as e:
+        logger.error(f"Error detecting language from multiple messages: {e}")
+        return default
+
+
 def get_language_name(lang_code):
     """
     Get the full language name from ISO 639-1 code.
-    
+
     Args:
         lang_code (str): ISO 639-1 language code
-        
+
     Returns:
         str: Full language name
-        
+
     Examples:
         >>> get_language_name('en')
         'English'
@@ -214,7 +304,7 @@ def get_language_name(lang_code):
         'he': 'Hebrew',
         'fa': 'Persian',
     }
-    
+
     return language_names.get(lang_code, lang_code.upper())
 
 

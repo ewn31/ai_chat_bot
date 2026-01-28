@@ -1,0 +1,108 @@
+{
+    "age": {
+        "question": {
+            "en": "What is your age?",
+            "fr": "Quel est votre âge ?"
+        },
+        "options": {
+            "en": ["Under 18", "18-24", "25-34", "35-44", "45+", "Prefer not to say"],
+            "fr": ["Moins de 18 ans", "18-24", "25-34", "35-44", "45+", "Préfère ne pas dire"]
+        }
+    },
+    "gender": {
+        "question": {
+            "en": "What is your gender?",
+            "fr": "Quel est votre genre ?"
+        },
+        "options": {
+            "en": ["Male", "Female", "Other", "Prefer not to say"],
+            "fr": ["Homme", "Femme", "Autre", "Préfère ne pas dire"]
+        }
+    },
+    "children": {
+        "question": {
+            "en": "How many children do you have?",
+            "fr": "Combien d'enfants avez-vous ?"
+        },
+        "options": {
+            "en": ["0", "1", "2", "3", "4+", "Skip"],
+            "fr": ["0", "1", "2", "3", "4+", "Passer"]
+        }
+    },
+    "location": {
+        "question": {
+            "en": "What is your city/location?",
+            "fr": "Quelle est votre ville/localisation ?"
+        }
+    },
+    "disabilities": {
+        "question": {
+            "en": "Do you have any disabilities or health conditions?",
+            "fr": "Avez-vous des handicaps ou des problèmes de santé ?"
+        },
+        "options": {
+            "en": ["None", "Yes (will specify)", "Prefer not to say"],
+            "fr": ["Aucun", "Oui (je préciserai)", "Préfère ne pas dire"]
+        }
+    },
+    "arv_medication": {
+        "question": {
+            "en": "Are you currently on ARV medication?",
+            "fr": "Prenez-vous actuellement des médicaments ARV ?"
+        },
+        "options": {
+            "en": ["Yes", "No", "Prefer not to say"],
+            "fr": ["Oui", "Non", "Préfère ne pas dire"]
+        }
+    },
+    "displaced": {
+        "question": {
+            "en": "Are you displaced from your home?",
+            "fr": "Êtes-vous déplacé(e) de votre domicile ?"
+        },
+        "options": {
+            "en": ["Yes", "No", "Prefer not to say"],
+            "fr": ["Oui", "Non", "Préfère ne pas dire"]
+        }
+    },
+    "occupation": {
+        "question": {
+            "en": "What is your occupation?",
+            "fr": "Quelle est votre profession ?"
+        },
+        "options": {
+            "en": ["Student", "Employed", "Self-employed", "Unemployed", "Skip"],
+            "fr": ["Étudiant(e)", "Employé(e)", "Indépendant(e)", "Sans emploi", "Passer"]
+        }
+    },
+    "last_menstrual_period": {
+        "question": {
+            "en": "When was your last menstrual period? (if applicable)",
+            "fr": "Quand ont eu lieu vos dernières règles ? (si applicable)"
+        },
+        "options": {
+            "en": ["Less than 4 weeks", "4-8 weeks", "8-12 weeks", "More than 12 weeks", "Not applicable", "Skip"],
+            "fr": ["Moins de 4 semaines", "4-8 semaines", "8-12 semaines", "Plus de 12 semaines", "Non applicable", "Passer"]
+        }
+    },
+    "marital_status": {
+        "question": {
+            "en": "What is your marital status?",
+            "fr": "Quel est votre état civil ?"
+        },
+        "options": {
+            "en": ["Single", "Married", "Divorced", "Widowed", "In a relationship", "Skip"],
+            "fr": ["Célibataire", "Marié(e)", "Divorcé(e)", "Veuf/Veuve", "En couple", "Passer"]
+        }
+    },
+    "religious_background": {
+        "question": {
+            "en": "What is your religious background?",
+            "fr": "Quelle est votre appartenance religieuse ?"
+        },
+        "options": {
+            "en": ["Christian", "Muslim", "Other", "None", "Skip"],
+            "fr": ["Chrétien(ne)", "Musulman(e)", "Autre", "Aucune", "Passer"]
+        }
+    }
+}
