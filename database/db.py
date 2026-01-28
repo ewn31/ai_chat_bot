@@ -180,22 +180,34 @@ def update_user_handler(user_id, handler):
 def update_user(user_id, field, data):
     """
     Update a specific field for a user.
-    
+
     Args:
         user_id (str): The unique identifier of the user.
-        field (str): The field to update ('handler' or 'profile_data').
+        field (str): The field to update (e.g., 'handler', 'language', 'age', etc.).
         data (str): The new data for the specified field.
-        
+
     Returns:
         bool: True if user was updated successfully.
-        
+
     Raises:
         ValueError: If field name is not valid.
     """
     logging.debug(f"Attempting to update user {user_id}, field: {field}")
+
+    # Whitelist of allowed fields (based on users table schema)
+    allowed_fields = [
+        "handler", "auth_key", "gender", "age_range",  # Original fields
+        "language",  # Migration 1
+        "age", "number_of_children", "location", "disability",  # Migration 8
+        "arv", "internally_displaced", "occupation",  # Migration 8
+        "last_menstrual_flow", "marital_status",  # Migration 8
+        "onboarding_level",  # Migration 10
+        "religious_background"  # Migration 11
+    ]
+
     conn = connect_db()
     cur = conn.cursor()
-    if field not in ["handler", "auth_key", "gender", "age_range"]:
+    if field not in allowed_fields:
         logging.error(f"Invalid field name attempted: {field}")
         raise ValueError("Invalid field name")
     query = f"UPDATE users SET {field} = ? WHERE id = ?"
