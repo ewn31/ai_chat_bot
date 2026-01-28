@@ -721,53 +721,53 @@ def clear_all_data():
     logging.info("Database reinitialized with schema")
     return True
 
-def add_counsellor_channel(counsellor_id, channel, channel_id, auth_key=None, order=None):
+def add_counsellor_channel(counsellor_username, channel, channel_id, auth_key=None, order=None):
     """add a channel to a counsellor
 
     Args:
-        counsellor_id (str): the counsellor's id 
+        counsellor_username (str): the counsellor's username
         channel (str): channel's name
         channel_id (str): channels' id used for sending messages
         auth_key(str): auth key for the channel, default none
         order (int): the rank of the channel, default none
-    
+
     Returns:
         bool: True if channel was added successfully.
-    
-    To do: 
+
+    To do:
         Add checks to make sure that channels that belong to the
         counsellor do not have the same rank(priority)
 
     """
-    logging.info(f"Adding channel {channel} to counsellor: {id}")
+    logging.info(f"Adding channel {channel} to counsellor: {counsellor_username}")
     try:
         conn = connect_db()
         cur = conn.cursor()
-        cur.execute("INSERT INTO channels (counsellor_id, channel, channel_id, auth_key, order) VALUES (?, ?, ?, ?, ?)",(counsellor_id, channel, channel_id, auth_key, order))
+        cur.execute("INSERT INTO channels (counsellor_username, channel, channel_id, auth_key, order_priority) VALUES (?, ?, ?, ?, ?)",(counsellor_username, channel, channel_id, auth_key, order))
         conn.commit()
-        logging.info(f"Successfully added channel {channel} to counsellor {counsellor_id}")
+        logging.info(f"Successfully added channel {channel} to counsellor {counsellor_username}")
         return True
     except Exception as e:
-        logging.error(f"Error adding channel to counsellor {counsellor_id}: {e}")
+        logging.error(f"Error adding channel to counsellor {counsellor_username}: {e}")
         return False
 
-def get_counsellor_channels(counsellor_id):
+def get_counsellor_channels(counsellor_username):
     """
     Get the channels associated with a counsellor.
-    
+
     Args:
-        counsellor_id (str): The unique identifier of the counsellor.
-        
+        counsellor_username (str): The username of the counsellor.
+
     Returns:
         list: List of channels empty list if no channels found.
     """
-    logging.debug(f"Retrieving channels for counsellor: {counsellor_id}")
+    logging.debug(f"Retrieving channels for counsellor: {counsellor_username}")
     conn = connect_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM channels WHERE counsellor_id = ?", (counsellor_id,))
+    cur.execute("SELECT * FROM channels WHERE counsellor_username = ?", (counsellor_username,))
     channels =  cur.fetchall()
     close_db(conn)
-    logging.info(f"Retrieved {len(channels)} channels for counsellor: {counsellor_id}")
+    logging.info(f"Retrieved {len(channels)} channels for counsellor: {counsellor_username}")
     return channels if channels else []
 
 def get_counsellor_channel_id(counsellor_username, channel):
