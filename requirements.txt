@@ -1,10 +1,10 @@
 requests
 dotenv
-langchain=0.3.27
+langchain==0.3.27
 chromadb
-langchain-together=0.3.1
-langchain_community=0.3.77
-langchain_huggingface=0.3.1
+langchain-together==0.3.1
+langchain_community==0.3.30
+langchain_huggingface==0.3.1
 sentence-transformers
 unstructured
 libmagic

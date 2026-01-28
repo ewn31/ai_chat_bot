@@ -1,34 +1,22 @@
 import os
-import json
 import re
 from typing import Tuple, Optional
+
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 #from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_together import Together
-
-try:
-    from .intent_inference import detect_intent
-except ImportError:
-    from intent_inference import detect_intent
-
-# Import the comprehensive prompt
-try:
-    from .abortion_counselling_prompt import (
-        SYSTEM_PROMPT,
-        CRISIS_PATTERNS,
-        ESCALATION_MESSAGES
-    )
-except ImportError:
-    from abortion_counselling_prompt import (
-        SYSTEM_PROMPT,
-        CRISIS_PATTERNS,
-        ESCALATION_MESSAGES
-    )
-
+#from .intent_inference import detect_intent
 import gradio as gr
+
+from menstrual_health_prompt import (
+    MENSTRUAL_HEALTH_SYSTEM_PROMPT,
+    MENSTRUAL_MEDICAL_ALERTS,
+    MEDICAL_ALERT_RESPONSES,
+    detect_medical_alert
+)
 
 
 #from summerizer import ConversationMemory
@@ -46,19 +34,17 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 data_dir = os.path.join(script_dir, "data")
 
 # Load prompt configuration
-prompt_config_path = os.path.join(script_dir, "prompt_instructions.json")
-with open(prompt_config_path, 'r', encoding='utf-8') as f:
-    prompt_config = json.load(f)
+# prompt_config_path = os.path.join(script_dir, "prompt_instructions.json")
+# with open(prompt_config_path, 'r') as f:
+#     prompt_config = json.load(f)
 
 # 2. Load documents
 loader = DirectoryLoader(data_dir, glob="**/*.txt")
 docs = loader.load()
-print(f"Loaded {len(docs)} documents.")
 
 # 3. Split documents for embedding
 splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 split_docs = splitter.split_documents(docs)
-print(f"Split into {len(split_docs)} document chunks.")
 
 # 4. Set up embeddings
 embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -110,23 +96,7 @@ retriever = db.as_retriever()
 
 print("Welcome to your RAG chatbot! Type 'exit' or 'quit' to stop.")
 
-#detect crisis fuction from claude
-
-def detect_crisis(text: str) -> Tuple[Optional[str], bool]:
-    """
-    Detect crisis indicators in user message.
-    Returns: (crisis_type, is_crisis)
-    """
-    text_lower = text.lower()
-    
-    for crisis_type, patterns in CRISIS_PATTERNS.items():
-        for pattern in patterns:
-            if re.search(pattern, text_lower, re.IGNORECASE):
-                return crisis_type, True
-    
-    return None, False
-
-#def build_structured_prompt(config, context, user_query, history=None):
+# def build_structured_prompt(config, context, user_query, history=None):
 #     """
 #     Build a structured prompt based on the configuration format.
 #     Supports XML, Markdown, and plain text formats.
@@ -140,11 +110,11 @@ def detect_crisis(text: str) -> Tuple[Optional[str], bool]:
 #     Returns:
 #         Formatted prompt string
 #     """
-#     #prompt_format = config.get("prompt_format", "xml").lower()
+#     prompt_format = config.get("prompt_format", "xml").lower()
     
-#     #if prompt_format == "xml":
+#     if prompt_format == "xml":
 #         # Build XML-structured prompt
-#     old_prompt = f"""<instruction>
+#         prompt = f"""<instruction>
 # You are a {config.get('role', 'helpful assistant')}. {config.get('task', 'Answer the user question.')}
 # </instruction>
 
@@ -279,37 +249,24 @@ def detect_crisis(text: str) -> Tuple[Optional[str], bool]:
     
 #     return prompt
 
-def build_structured_prompt(config, context, user_query, lang='EN', history=None):
-    """
-    Build prompt using comprehensive system prompt instead of simple JSON config.
-    Now ignores most of the JSON config and uses SYSTEM_PROMPT instead.
-    """
 
+def build_prompt(context: str, user_query: str, history: list = None) -> str:
+    """Build complete prompt for menstrual health bot."""
+    
     # Format conversation history
     if history:
-        # History is already a formatted string from prepare_history_for_llm
-        if isinstance(history, str):
-            history_text = history
-        # Legacy format: list of dicts with 'user' and 'bot' keys
-        elif isinstance(history, list):
-            history_text = "\n".join([
-                f"User: {turn['user']}\nBot: {turn['bot']}"
-                for turn in history[-5:]  # Last 5 turns only
-            ])
-        else:
-            history_text = str(history)
+        history_text = "\n".join([
+            f"User: {turn['user']}\nBot: {turn['bot']}"
+            for turn in history[-5:]  # Last 5 turns
+        ])
     else:
         history_text = "This is the start of the conversation."
-    # Set language
-    language = 'English'
-    if (lang == 'fr') or (lang == 'FR') or (lang == 'Fr'):
-        language = 'French'
     
-    # Build comprehensive prompt
-    prompt = f"""{SYSTEM_PROMPT}
+    # Build prompt
+    prompt = f"""{MENSTRUAL_HEALTH_SYSTEM_PROMPT}
 
 <relevant_information>
-The following information from our knowledge base may be helpful:
+The following information from the knowledge base may be helpful:
 
 {context}
 </relevant_information>
@@ -318,130 +275,215 @@ The following information from our knowledge base may be helpful:
 {history_text}
 </conversation_history>
 
-<user_message>
+<user_question>
 {user_query}
-</user_message>
+</user_question>
 
 <instructions>
-Respond appropriately following ALL guidelines above.
+Respond following all guidelines above.
 
 REMEMBER:
-1. Be non-directive (don't tell them what to do)
-2. Be non-judgmental (validate all feelings)
-3. Provide accurate information
-4. Protect privacy
+1. Use inclusive language (not only women menstruate)
+2. Normalize menstruation (counter stigma)
+3. Provide accurate, evidence-based information
+4. Be specific with medical info (dosages, warnings)
+5. Recommend medical consultation when appropriate
 
 Respond in plain text (no XML tags in output).
-Respond in {language}
 </instructions>
 """
     
     return prompt
 
     
-def get_response(user_query, lang, history=None):
-    """
-    Get a response from the chatbot based on the user query.
-    Now with crisis detection and escalation.
-    
-    """
-    #if user_query.lower() in ["exit", "quit"]:
-        #memory.add_turn("User", user_query)
-        #memory.add_turn("Bot", "Goodbye!")
-        #return "Goodbye!"
+# def get_response(user_query, history=None):
+#     """
+#     Get a response from the chatbot based on the user query.
+#     """
+#     #if user_query.lower() in ["exit", "quit"]:
+#         #memory.add_turn("User", user_query)
+#         #memory.add_turn("Bot", "Goodbye!")
+#         #return "Goodbye!"
 
-    # Step 0: Detect intent
-    intent, confidence = detect_intent(user_query)
-    #memory.add_turn("User", user_query)
-    print(f"Detected intent: {intent} (confidence: {confidence})")
+#     # Step 0: Detect intent
+#     intent, confidence = detect_intent(user_query)
+#     #memory.add_turn("User", user_query)
+#     print(f"Detected intent: {intent} (confidence: {confidence})")
 
-    if intent == "escalate" and confidence > 0.43:
-        #memory.add_turn("Bot", "Escalating to a human agent...")
-        return "Escalating to a counsellor..."
+#     if intent == "escalate" and confidence > 0.6:
+#         #memory.add_turn("Bot", "Escalating to a human agent...")
+#         return "Escalating to a counsellor..."
+
+#     # Step 1: Retrieve relevant documents
+#     retrieved_docs = retriever.get_relevant_documents(user_query)
+#     if not retrieved_docs:
+#         #memory.add_turn("Bot", out_of_scope_message)
+#         return out_of_scope_message
+
+#     # Step 2: Collate retrieved content for context
+#     context = "\n".join(doc.page_content for doc in retrieved_docs)
+
+#     # Step 3: Build structured prompt using configuration
+#     prompt = build_structured_prompt(
+#         config=prompt_config,
+#         context=context,
+#         user_query=user_query,
+#         history=history
+#     )
+
+#     # Step 4: Get answer from LLM
+#     try:
+#         response = llm.invoke(prompt)
+#     except Exception as e:
+#         print("Error occurred while invoking LLM:", e)
+#         response = "Sorry, I couldn't process your request."
+#     #memory.add_turn("Bot", response)
+#     return response
+
+
+def get_response(user_query: str, history: list = None) -> str:
+    """
+    Get response from menstrual health chatbot.
+    Includes medical alert detection.
+    """
     
-    #Crisis detection
-    crisis_type, is_crisis = detect_crisis(user_query)
+    # STEP 1: Check for medical alerts
+    alert_type, requires_attention = detect_medical_alert(user_query)
     
-    if is_crisis:
-        print(f"⚠️ CRISIS DETECTED: {crisis_type}")
-        escalation_msg = ESCALATION_MESSAGES.get(
-            crisis_type, 
-            ESCALATION_MESSAGES["coercion"]  # Default
+    if requires_attention:
+        print(f"⚠️ MEDICAL ALERT: {alert_type}")
+        # Prepend medical alert to response
+        alert_message = MEDICAL_ALERT_RESPONSES.get(
+            alert_type,
+            MEDICAL_ALERT_RESPONSES["severe_symptoms"]
         )
-        return escalation_msg
-
-    # Step 1: Retrieve relevant documents
+        
+        # Still retrieve context for additional info
+        retrieved_docs = retriever.get_relevant_documents(user_query)
+        context = "\n\n".join([doc.page_content for doc in retrieved_docs])
+        
+        prompt = build_prompt(context, user_query, history)
+        
+        try:
+            response = llm.invoke(prompt)
+            # Add medical alert before the response
+            return f"{alert_message}\n\n{response}"
+        except Exception as e:
+            print(f"Error: {e}")
+            return alert_message
+    
+    # STEP 2: Normal flow - retrieve context and respond
     retrieved_docs = retriever.get_relevant_documents(user_query)
+    
     if not retrieved_docs:
-        #memory.add_turn("Bot", out_of_scope_message)
-        return out_of_scope_message
-
-    # Step 2: Collate retrieved content for context
-    context = "\n".join(doc.page_content for doc in retrieved_docs)
-
-    # Step 3: Build structured prompt using configuration
-    prompt = build_structured_prompt(
-        config=prompt_config,
-        context=context,
-        user_query=user_query,
-        lang=lang,
-        history=history
-    )
-
-    # Step 4: Get answer from LLM
+        return "I can help with questions about menstrual health, including periods, cramps, products, and menstrual dignity. What would you like to know?"
+    
+    context = "\n\n".join([doc.page_content for doc in retrieved_docs])
+    
+    prompt = build_prompt(context, user_query, history)
+    
     try:
         response = llm.invoke(prompt)
+        return response
     except Exception as e:
-        print("Error occurred while invoking LLM:", e)
-        response = "Sorry, I couldn't process your request."
-    #memory.add_turn("Bot", response)
-    return response
+        print(f"Error: {e}")
+        return "I'm having technical difficulties. Please try again or consult a healthcare provider for medical questions."
 
-def chat_interface(user_query, history):
-    """
-    Interface function for Gradio to handle user queries.
-    """
+
+
+# def chat_interface(user_query, history):
+#     """
+#     Interface function for Gradio to handle user queries.
+#     """
+#     response = get_response(user_query)
+#     # Optionally, you can return the history as well for debugging or display
+#     # full_history = memory.get_history()
+#     return response
+  
+# with gr.Blocks() as demo:
+#     gr.ChatInterface(
+#         fn=chat_interface,
+#         title="RAG Chatbot Demo",
+#         description="Ask questions about abortion.",
+#         theme="soft",
+#         examples=["What is abortion?", "What is safe abortion?", "What are the risks of abortion?"]
+#     )
+
+# if __name__ == "__main__":
+#     print("Starting the chatbot interface...")
+#     # Launch the Gradio interface
+#     demo.launch()
+
+
+def chat_interface(user_query: str, history) -> str:
+    """Gradio interface function."""
+    
+    # Convert Gradio history format
     chat_history = []
     if history:
-        for user_msg, bot_msg in history:
-            if user_msg and bot_msg:
-                chat_history.append({"user": user_msg, "bot": bot_msg})
-
-    response = get_response(user_query, 'EN', history=chat_history)
-    # Optionally, you can return the history as well for debugging or display
-    # full_history = memory.get_history()
+        for item in history:
+            # Gradio ChatInterface passes tuples with (user_msg, bot_msg) or more elements
+            if isinstance(item, (list, tuple)) and len(item) >= 2:
+                user_msg, bot_msg = item[0], item[1]
+                if user_msg and bot_msg:
+                    chat_history.append({"user": user_msg, "bot": bot_msg})
+    
+    response = get_response(user_query, chat_history)
     return response
 
-PRIVACY_NOTICE = """🔒 **PRIVACY & CONFIDENTIALITY**
 
-**Your privacy is protected:**
-- This conversation is confidential
-- Your information is secure
-- We never share with anyone
+# Create Gradio interface
+WELCOME_MESSAGE = """🌸 **Welcome to Menstrual Dignity & Health Support**
 
-**For crisis support:**
-- Counselor: +237-XXX-XXX-XXX
-- Crisis Line: XXX-XXX-XXXX (24/7)
+I provide inclusive, stigma-free information about menstruation for everyone who menstruates - including women, girls, trans men, non-binary people, and all menstruators.
 
-How can I help you today?
+**I can help with:**
+- Understanding your menstrual cycle
+- Managing cramps and pain
+- Choosing menstrual products
+- Busting myths and challenging stigma
+- Sexual health during periods
+- Gender-affirming menstrual strategies
+- When to seek medical help
+
+**Remember:** 
+- Menstruation is natural, healthy, and nothing to be ashamed of
+- Not only women menstruate
+- You deserve to manage your period with dignity
+
+What would you like to know?
 """
-
 with gr.Blocks() as demo:
     gr.ChatInterface(
         fn=chat_interface,
-        title="Abortion Information & Support Bot",
-        description=PRIVACY_NOTICE,
-        theme="soft",
-        examples=["What is abortion?",
-                  "What is safe abortion?",
-                  "What are the risks of abortion?"
-                  "What are the different methods",
-                  "I'm not sure what to do"
-                  ]
-    )
+        title="Menstrual Dignity & Health Bot",
+        description=WELCOME_MESSAGE,
+        #theme="soft",
+        examples=[
+            "What is menstrual dignity?",
+            "How do I use ibuprofen for cramps?",
+            "Can I swim during my period?",
+            "Is menstrual blood dirty?",
+            "I'm a trans guy and periods make me dysphoric. What can I do?",
+            "Can you get pregnant during your period?",
+            "What menstrual products are available?",
+            "When should I see a doctor about my period?",
+                ],
+    #chatbot=gr.Chatbot(height=500),
+    #textbox=gr.Textbox(placeholder="Ask about menstrual health...", container=False, scale=7),
+    #retry_btn="🔄 Retry",
+    #undo_btn="↩️ Undo",
+    #clear_btn="🗑️ Clear"
+)
 
 if __name__ == "__main__":
-    print("Starting the chatbot interface...")
-    # Launch the Gradio interface
-    demo.launch(share=True)
+    print("\n" + "="*60)
+    print("MENSTRUAL DIGNITY & HEALTH CHATBOT")
+    print("="*60)
     
+    #if not TOGETHER_API_KEY:
+        #print("\n⚠️ ERROR: Set TOGETHER_API_KEY environment variable")
+        #exit(1)
+    
+    print("\nLaunching Gradio interface...")
+    demo.launch(share=True)    
