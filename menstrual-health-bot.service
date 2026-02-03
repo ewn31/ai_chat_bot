@@ -1,0 +1,35 @@
+[Unit]
+Description=Menstrual Health Chatbot Service
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/menstrual_health_bot/ai_chat_bot
+Environment="PATH=/opt/menstrual_health_bot/ai_chat_bot/venv/bin"
+
+# Load environment variables from .env file
+EnvironmentFile=/opt/menstrual_health_bot/ai_chat_bot/.env
+
+# Run migrations before starting
+ExecStartPre=/opt/menstrual_health_bot/ai_chat_bot/venv/bin/python /opt/menstrual_health_bot/ai_chat_bot/migrate.py apply
+
+# Start the bot using Waitress
+ExecStart=/opt/menstrual_health_bot/ai_chat_bot/venv/bin/waitress-serve --host=0.0.0.0 --port=${PORT} --threads=4 index:app
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=menstrual-health-bot
+
+[Install]
+WantedBy=multi-user.target
