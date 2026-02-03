@@ -8,6 +8,8 @@ User=www-data
 Group=www-data
 WorkingDirectory=/opt/menstrual_health_bot/ai_chat_bot
 Environment="PATH=/opt/menstrual_health_bot/ai_chat_bot/venv/bin"
+Environment="NLTK_DATA=/opt/menstrual_health_bot/ai_chat_bot/nltk_data"
+Environment="HOME=/opt/menstrual_health_bot/ai_chat_bot"
 
 # Load environment variables from .env file
 EnvironmentFile=/opt/menstrual_health_bot/ai_chat_bot/.env

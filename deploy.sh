@@ -72,13 +72,22 @@ else
 fi
 
 echo
-echo "Step 7: Creating log directory..."
+echo "Step 7: Downloading NLTK data..."
+if [ -f "$APP_DIR/download_nltk_data.py" ]; then
+    sudo -u $SERVICE_USER "$APP_DIR/venv/bin/python" "$APP_DIR/download_nltk_data.py"
+    echo "✓ NLTK data downloaded"
+else
+    echo "Warning: download_nltk_data.py not found, skipping NLTK data download"
+fi
+
+echo
+echo "Step 8: Creating log directory..."
 mkdir -p "$LOG_DIR"
 chown $SERVICE_USER:$SERVICE_GROUP "$LOG_DIR"
 echo "✓ Log directory created"
 
 echo
-echo "Step 8: Checking .env file..."
+echo "Step 9: Checking .env file..."
 if [ ! -f "$APP_DIR/.env" ]; then
     echo "Warning: .env file not found"
     echo "Creating template .env file..."
@@ -103,13 +112,13 @@ else
 fi
 
 echo
-echo "Step 9: Installing systemd service..."
+echo "Step 10: Installing systemd service..."
 cp "$APP_DIR/$APP_NAME.service" /etc/systemd/system/
 systemctl daemon-reload
 echo "✓ Service installed"
 
 echo
-echo "Step 10: Enabling service to start on boot..."
+echo "Step 11: Enabling service to start on boot..."
 systemctl enable $APP_NAME.service
 echo "✓ Service enabled"
 
