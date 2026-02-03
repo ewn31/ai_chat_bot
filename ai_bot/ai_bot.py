@@ -393,20 +393,28 @@ def get_response(user_query: str, lang: str = "en", history: list = None) -> str
     
     # STEP 2: Normal flow - retrieve context and respond
     retrieved_docs = retriever.get_relevant_documents(user_query)
-    
+
     if not retrieved_docs:
-        return "I can help with questions about menstrual health, including periods, cramps, products, and menstrual dignity. What would you like to know?"
-    
+        # Return localized message based on language
+        if lang.lower() in ["fr", "french"]:
+            return "Je peux vous aider avec des questions sur la santé menstruelle, y compris les règles, les crampes, les produits et la dignité menstruelle. Que souhaitez-vous savoir?"
+        else:
+            return "I can help with questions about menstrual health, including periods, cramps, products, and menstrual dignity. What would you like to know?"
+
     context = "\n\n".join([doc.page_content for doc in retrieved_docs])
-    
-    prompt = build_prompt(context, user_query, history)
+
+    prompt = build_prompt(context, user_query, lang, history)
     
     try:
         response = llm.invoke(prompt)
         return response
     except Exception as e:
         print(f"Error: {e}")
-        return "I'm having technical difficulties. Please try again or consult a healthcare provider for medical questions."
+        # Return localized error message
+        if lang.lower() in ["fr", "french"]:
+            return "Je rencontre des difficultés techniques. Veuillez réessayer ou consulter un professionnel de santé pour les questions médicales."
+        else:
+            return "I'm having technical difficulties. Please try again or consult a healthcare provider for medical questions."
 
 
 
