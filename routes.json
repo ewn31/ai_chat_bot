@@ -25,5 +25,19 @@
             "video": "messages/video",
             "options": "messages/interactive"
         }
+    },
+
+    "menstrual_health": {
+        "name": "Menstrual Health Bot Route",
+        "api_url": "https://gate.whapi.cloud",
+        "api_token": "yuJu9629Y6b777Sdvwnf2WuNOutjT9BD",
+        "endpoint": {
+            "text": "messages/text",
+            "image": "messages/image",
+            "document": "messages/document",
+            "audio": "messages/audio",
+            "video": "messages/video",
+            "options": "messages/interactive"
+        }
     }
 }
