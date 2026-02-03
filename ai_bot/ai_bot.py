@@ -11,12 +11,20 @@ from langchain_together import Together
 #from .intent_inference import detect_intent
 import gradio as gr
 
-from menstrual_health_prompt import (
-    MENSTRUAL_HEALTH_SYSTEM_PROMPT,
-    MENSTRUAL_MEDICAL_ALERTS,
-    MEDICAL_ALERT_RESPONSES,
-    detect_medical_alert
-)
+try:
+    from .menstrual_health_prompt import (
+        MENSTRUAL_HEALTH_SYSTEM_PROMPT,
+        MENSTRUAL_MEDICAL_ALERTS,
+        MEDICAL_ALERT_RESPONSES,
+        detect_medical_alert
+    )
+except ImportError:
+    from menstrual_health_prompt import (
+        MENSTRUAL_HEALTH_SYSTEM_PROMPT,
+        MENSTRUAL_MEDICAL_ALERTS,
+        MEDICAL_ALERT_RESPONSES,
+        detect_medical_alert
+    )
 
 
 #from summerizer import ConversationMemory
@@ -250,7 +258,7 @@ print("Welcome to your RAG chatbot! Type 'exit' or 'quit' to stop.")
 #     return prompt
 
 
-def build_prompt(context: str, user_query: str, history: list = None) -> str:
+def build_prompt(context: str, user_query: str, lang: str = "en", history: list = None) -> str:
     """Build complete prompt for menstrual health bot."""
     
     # Format conversation history
@@ -261,7 +269,15 @@ def build_prompt(context: str, user_query: str, history: list = None) -> str:
         ])
     else:
         history_text = "This is the start of the conversation."
+        
+    if lang.lower()  in ["en", "english"]:
+        language = "English"
+    elif lang.lower() in ["fr", "french"]:
+        language = "French"
+    else:
+        language = "English"
     
+
     # Build prompt
     prompt = f"""{MENSTRUAL_HEALTH_SYSTEM_PROMPT}
 
@@ -282,6 +298,8 @@ The following information from the knowledge base may be helpful:
 <instructions>
 Respond following all guidelines above.
 
+If a question is out of scope, respond with:
+I can only answer questions related to menstrual health, including periods, cramps, products, and menstrual dignity. What would you like to know?
 REMEMBER:
 1. Use inclusive language (not only women menstruate)
 2. Normalize menstruation (counter stigma)
@@ -290,6 +308,7 @@ REMEMBER:
 5. Recommend medical consultation when appropriate
 
 Respond in plain text (no XML tags in output).
+Respond in {language}
 </instructions>
 """
     
@@ -341,7 +360,7 @@ Respond in plain text (no XML tags in output).
 #     return response
 
 
-def get_response(user_query: str, history: list = None) -> str:
+def get_response(user_query: str, lang: str = "en", history: list = None) -> str:
     """
     Get response from menstrual health chatbot.
     Includes medical alert detection.
@@ -362,7 +381,7 @@ def get_response(user_query: str, history: list = None) -> str:
         retrieved_docs = retriever.get_relevant_documents(user_query)
         context = "\n\n".join([doc.page_content for doc in retrieved_docs])
         
-        prompt = build_prompt(context, user_query, history)
+        prompt = build_prompt(context, user_query, lang, history)
         
         try:
             response = llm.invoke(prompt)

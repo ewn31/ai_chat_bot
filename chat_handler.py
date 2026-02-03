@@ -22,14 +22,27 @@ dotenv.load_dotenv()
 #incoming message are dictionaries
 #Not all the incoming messages have the same structure
 
-GREEETINGS_EN = """Hello bestie, welcome to aunty queen connect. I’m your good friend AWAA and I’m here to listen to, and share truthful, judgment-free information about safe abortion and reproductive health with you.
-Feel free to ask me anything. It’s private, safe, and always with care."""
+GREETINGS_EN = """Hello bestie, welcome to aunty queen connect. I’m your good friend AWAA and I’m here to listen to, and share truthful, judgment-free information about safe abortion and reproductive health with you.
+Feel free to ask me anything. It’s private, safe, and always with care."""
 
-GREETINGS_FR = "Bienvenue! Comment puis-je vous aider aujourd'hui?"
+GREETINGS_FR = """Bonjour mon ami, bienvenue à Aunty Queen Connect. Je suis votre bonne amie AWAA et je suis ici pour vous écouter et partager des 
+informations véridiques et sans jugement sur l'avortement sûr et la santé reproductive avec vous."""
 
 LANGUAGE_SELECTION_PROMPT = """Hello / Bonjour 👋
 
-Please select your preferred language / Veuillez sélectionner votre langue préférée:"""
+Please select your preferred language. / Veuillez sélectionner votre langue préférée:"""
+
+ONBOARDING_INTRO_EN = """To provide you the best care, we need some information. This takes 2-3 minutes.
+
+🔒 *Your privacy is protected* - all information is confidential. You can answer by selecting
+
+the options or by typing your response."""
+
+ONBOARDING_INTRO_FR = """Pour vous fournir les meilleurs soins, nous avons besoin de quelques informations. Cela prend 2-3 minutes.
+
+🔒 *Votre vie privée est protégée* - toutes les informations sont confidentielles. Vous pouvez répondre en sélectionnant
+
+les options ou en tapant votre réponse."""
 
 INFORMATION_DEMAND_EN = """To provide you the best care, we need some information. This takes 2-3 minutes.
 
@@ -102,6 +115,8 @@ def incoming_messages(user, message, reciever_id=None):
     logging.info("Handling incoming message")
     logging.debug("Message from: %s, Message: %s", user, message)
     #if MODE == "no_counsellor":
+    msg_type = message['type']
+    logging.debug("Incoming message type: %s", msg_type)
     if not is_counsellor(user):
         logging.debug('mode: %s', MODE)
         logging.debug('User: %s, Message: %s', user, message)
@@ -111,75 +126,133 @@ def incoming_messages(user, message, reciever_id=None):
             register_user(user)
             logging.info("User %s registered successfully.", user)
             save_conversation(user, message)
-            logging.debug("Changing user %s handler to on-boarder", user)
-            if users.update_user_handler(user, "on-boarder"):
-                logging.info("User %s handler changed to on-boarder successfully.", user)
+            logging.debug("Changing user %s handler to language_selector", user)
+            if users.update_user_handler(user, "language_selector"):
+                logging.info("User %s handler changed to language_selector successfully.", user)
             # Send language selection buttons
             send_language_selection(user)
             return
         logging.info("Saving conversation for user: %s", user)
         save_conversation(user, message)
         user_profile = get_user_profile(user)
-        if user_profile and user_profile['handler'] == "on-boarder":
+        if user_profile and user_profile['handler'] == "language_selector":
             # Check if language has been set
             user_language = user_profile.get('language')
+            logging.debug("Current user language: %s", user_language)
 
-            if not user_language:
-                # This is the language selection response
+            # Process button/text replies to set or update language
+            selected_language = user_language or 'en'  # Default to English or keep existing
+
+            # Check for button reply first (always process, even if language already set)
+            if msg_type == 'reply':
+                category, option = get_button_category_and_options(message)
+                if category == 'lang':
+                    selected_language = option
+                    users.update_user(user, 'language', selected_language)
+                    logging.info("Language selected via button: %s", option)
+                    user_language = selected_language
+            elif not user_language:
+                # Only process text-based language selection if language not already set
+                logging.info("User %s has not set language yet.", user)
                 logging.info("Processing language selection for user: %s", user)
-                msg_data = get_chat_data(message)
-                user_input = msg_data.get('body', '').lower().strip()
-
-                # Check for button response (has 'button_id' field in button replies)
-                selected_language = 'en'  # Default
-
-                # Try to parse button ID (format: lang_en or lang_fr)
-                if 'button_id' in msg_data and msg_data['button_id'].startswith('lang_'):
-                    selected_language = msg_data['button_id'].split('_')[1]
-                    logging.info("Language selected via button: %s", selected_language)
-                # Check text response
-                elif 'français' in user_input or 'francais' in user_input or user_input == 'fr':
-                    selected_language = 'fr'
-                    logging.info("Language selected via text (French): %s", user_input)
-                elif 'english' in user_input or user_input == 'en':
-                    selected_language = 'en'
-                    logging.info("Language selected via text (English): %s", user_input)
-                else:
-                    # Try to detect from message
-                    selected_language = detect_language(user_input, default='en')
-                    logging.info("Language detected from message: %s", selected_language)
-
+                if msg_type == 'text':
+                    last_msg = db.get_last_memory(user)
+                    if last_msg:
+                        last_msg_content = last_msg['content'].lower()
+                        #Case where user types language instead of using buttons
+                        if last_msg_content in LANGUAGE_SELECTION_PROMPT.lower():
+                            # This is the language selection message
+                            msg = get_chat_data(message)['body'].lower()
+                            #check if user replied with language name in current message
+                            if 'français' in msg or 'francais' in msg or msg == 'fr':
+                                selected_language = 'fr'
+                                users.update_user(user, 'language', selected_language)
+                                logging.info("Language selected via text (French): %s", msg)
+                            elif 'english' in msg or 'english' in msg or msg == 'en':
+                                logging.info("Language selected via text (English): %s", msg)
+                                selected_language = 'en'
+                                users.update_user(user, 'language', selected_language)
+                            #else try to detect language
+                            else:
+                                detected_lang = detect_language(msg, default='en')
+                                users.update_user(user, 'language', detected_lang)
+                                selected_language = detected_lang
+                                logging.info("Language detected from message: %s", detected_lang)    
+                        # Check if user replied with language name in previous message
+                        elif 'français' in last_msg_content or 'francais' in last_msg_content or last_msg_content == 'fr':
+                            selected_language = 'fr'
+                            logging.info("Language selected via text in previous message (French): %s", last_msg_content)
+                            users.update_user(user, 'language', selected_language)
+                        elif 'english' in last_msg_content or last_msg_content == 'en':
+                            selected_language = 'en'
+                            logging.info("Language selected via text in previous message (English): %s", last_msg_content)
+                            users.update_user(user, 'language', selected_language)
+                    else:
+                        logging.warning("No previous message found for user %s to determine language selection.", user)
+                        msg = get_chat_data(message)['body'].lower()
+                        detected_lang = detect_language(msg, default='en')
+                        selected_language = detected_lang
+                        users.update_user(user, 'language', selected_language)
+                        logging.info("Language detected from message: %s", selected_language)
                 # Store selected language
-                users.update_user(user, "language", selected_language)
-                logging.info("Stored language preference for user %s: %s", user, selected_language)
-
+                #users.update_user(user, "language", selected_language)
+                
+                user_language = selected_language
                 # Send welcome message in selected language
-                if selected_language == 'fr':
-                    send_message(user, GREETINGS_FR)
-                else:
-                    send_message(user, GREEETINGS_EN)
+            if user_language == 'fr':
+                logging.info("Sending French welcome messages to user: %s", user)
+                send_message(user, GREETINGS_FR)
+                logging.info("Sending French onboarding intro to user: %s", user)
+                send_message(user, ONBOARDING_INTRO_FR)
+            else:
+                logging.info("Sending English welcome messages to user: %s", user)
+                send_message(user, GREETINGS_EN)
+                logging.info("Sending English onboarding intro to user: %s", user)
+                send_message(user, ONBOARDING_INTRO_EN)
 
-                # Initialize onboarding - set first question
-                questions_obj = data_extractor.load_question_list("user_data.json")
-                first_question = data_extractor.set_next_question(questions_obj, None)
-                users.update_user(user, "onboarding_level", first_question)
-                logging.info("Initialized onboarding for user %s with first question: %s", user, first_question)
+            # Update handler to onboarding for both languages
+            logging.info("Setting handler to onboarding for user: %s", user)
+            users.update_user_handler(user, "onboarding")
 
-                return
-
-            # Language is set, proceed with onboarding questions
             current_question = user_profile['onboarding_level']
+            # Load questions object (needed for sending questions)
+            questions_obj = data_extractor.load_question_list("user_data.json")
 
-            # If there's a current question, this message is the answer to it
-            if current_question:
-                msg_data = get_chat_data(message)
-                user_answer = msg_data.get('body', '').strip()
-
-                # Save the answer to the appropriate field
-                logging.info("Saving answer for question '%s' from user %s: %s", current_question, user, user_answer)
-
-                # Map question keys to database fields
-                field_mapping = {
+            if not current_question:
+                # Initialize onboarding - set first question
+                logging.debug("Initializing onboarding for user: %s", user)
+                question_titles = list(questions_obj.keys())
+                current_question = question_titles[0]
+                logging.info("First onboarding question for user %s: %s", user, current_question)
+                logging.debug("Current onboarding question for user %s: %s", user, current_question)
+            question_status = send_onboarding_question(questions_obj, current_question, user_language, user)
+            if not question_status:
+                logging.error("Failed to send onboarding question to user %s", user)
+            return
+        
+        elif user_profile and user_profile['handler'] == "onboarding":
+            RESEND_MSG = """Sorry the option you selected is not valid. Please select a valid option
+            
+            """
+            
+            def resend_question(current_question, questions_obj, user_lang, user):
+                send_message(user, RESEND_MSG)
+                question_to_send, options_to_send = data_extractor.message_builder(questions_obj, current_question, user_lang)
+                route = os.getenv('DEFAULT_ROUTE', 'test_route')
+                res_status = data_extractor.send_question(user, question_to_send, route, options_to_send)
+                if res_status:
+                    logging.info("Resent question: %s because user: %s did not select an appropriate option", question_to_send, user)
+                    return
+                else:
+                    logging.error("Failed to resend question: %s because user: %s did not select an appropriate option", question_to_send, user)
+                    return
+            
+            user_lang = user_profile['language']
+            
+            questions_obj = data_extractor.load_question_list('user_data.json')
+            #Extract user answer and save to db
+            # Map question keys to database fields
+            field_mapping = {
                     'age': 'age',
                     'gender': 'gender',
                     'children': 'number_of_children',
@@ -191,22 +264,74 @@ def incoming_messages(user, message, reciever_id=None):
                     'last_menstrual_period': 'last_menstrual_flow',
                     'marital_status': 'marital_status',
                     'religious_background': 'religious_background'
-                }
+            }
+            #Note set next question only after user has answered the current question
+            current_question = user_profile.get('onboarding_level')
 
-                db_field = field_mapping.get(current_question)
-                if db_field:
-                    # Don't save if user skipped or preferred not to say
-                    skip_values = ['skip', 'passer', 'prefer not to say', 'préfère ne pas dire']
-                    if user_answer.lower() not in skip_values:
-                        users.update_user(user, db_field, user_answer)
-                        logging.info("Saved %s = %s for user %s", db_field, user_answer, user)
-                    else:
-                        logging.info("User %s skipped question: %s", user, current_question)
+            # If no current question is set, initialize to first question
+            if not current_question:
+                logging.warning("No onboarding_level set for user %s, initializing to first question", user)
+                question_titles = list(questions_obj.keys())
+                current_question = question_titles[0]
+                users.update_user(user, "onboarding_level", current_question)
+                logging.info("Initialized onboarding_level to: %s for user %s", current_question, user)
 
-            # Send next question
-            questions_obj = data_extractor.load_question_list("user_data.json")
+            logging.debug("Current onboarding question for user %s: %s", user, current_question)
+
+            #case where user responds with button
+            if msg_type == 'reply':
+                question_category, selected_option = extract_data_from_reply(message)
+                if current_question == question_category:
+                    db_field = field_mapping.get(current_question)
+                    if db_field:
+                        # Don't save if user skipped or preferred not to say
+                        skip_values = ['skip', 'passer', 'prefer not to say', 'préfère ne pas dire']
+                        if selected_option.lower() not in skip_values:
+                            users.update_user(user, db_field, selected_option)
+                            logging.info("Saved %s = %s for user %s", db_field, selected_option, user)
+                        else:
+                            logging.info("User %s skipped question: %s", user, current_question)
+                else:
+                    resend_question(current_question, questions_obj, user_lang, user)
+                    return  # Don't proceed to next question if wrong button was clicked
+
+            elif msg_type == 'text':
+                # Handle text response with validation
+                user_response = get_chat_data(message)['body']
+                logging.debug("Processing text response for question %s: %s", current_question, user_response)
+
+                # Validate the response
+                is_valid, error_msg, sanitized_value = data_extractor.validate_user_response(
+                    user_response,
+                    current_question,
+                    questions_obj,
+                    user_lang
+                )
+
+                if is_valid:
+                    # Save the validated response
+                    db_field = field_mapping.get(current_question)
+                    if db_field and sanitized_value:
+                        # Check if user is skipping
+                        skip_values = ['skip', 'passer', 'prefer not to say', 'préfère ne pas dire']
+                        if sanitized_value.lower() not in skip_values:
+                            users.update_user(user, db_field, sanitized_value)
+                            logging.info("Saved %s = %s for user %s (from text input)", db_field, sanitized_value, user)
+                        else:
+                            logging.info("User %s skipped question: %s", user, current_question)
+                    elif not sanitized_value:
+                        # Empty response for optional question
+                        logging.info("User %s provided empty response for optional question: %s", user, current_question)
+                else:
+                    # Validation failed - send error message and resend question
+                    logging.warning("Invalid response from user %s for question %s: %s", user, current_question, error_msg)
+                    send_message(user, error_msg)
+                    resend_question(current_question, questions_obj, user_lang, user)
+                    return  # Don't proceed to next question
+            else:
+                resend_question(current_question, questions_obj, user_lang, user)
             next_question = data_extractor.set_next_question(questions_obj, current_question)
-
+            
             if next_question == 'Done':
                 logging.info("Onboarding complete for user: %s", user)
                 users.update_user_handler(user, "ai_bot")
@@ -215,18 +340,20 @@ def incoming_messages(user, message, reciever_id=None):
                     'en': "Your information is safe and confidential. How can we help you?",
                     'fr': "Vos informations sont sûres et confidentielles. Comment pouvons-nous vous aider ?"
                 }
-                send_message(user, completion_msg.get(user_language, completion_msg['en']))
+                send_message(user, completion_msg.get(user_lang, completion_msg['en']))
                 return
 
             # Update to next question and send it
             users.update_user(user, "onboarding_level", next_question)
             logging.debug("Updated onboarding level to: %s for user: %s", next_question, user)
 
-            question, options = data_extractor.message_builder(questions_obj, next_question, user_language)
-            data_extractor.send_question(user, question, options)
+            # Send the next question
+            question_status = send_onboarding_question(questions_obj, next_question, user_lang, user)
+            if not question_status:
+                logging.error("Failed to send next onboarding question %s to user %s", next_question, user)
+            return       
                 
-                
-        if user_profile and user_profile['handler'] == "counsellor":
+        elif user_profile and user_profile['handler'] == "counsellor":
             if MODE == "no_counsellor":
                 logging.info("User %s is assigned to a counsellor, skipping AI response", user)
                 return
@@ -261,19 +388,26 @@ def incoming_messages(user, message, reciever_id=None):
             else:   
                 print("Invalid MODE. Please set MODE to 'no_counsellor', 'single_counsellor', or 'multi_counsellor'.")
                 return
-        user_message = get_chat_data(message)['body']
-        ai_response = get_ai_response(user, user_message, user_profile['language'])
-        if ai_response is None:
-            pass
-        if ai_response == "Escalating to a counsellor...":
-            #user_transcript = get_transcript(user)
-            escalate_to_counsellor(user)
-            notify_user_counsellor_assigned(user, user_profile['language'])
-            send_message(user, "Due to the sensitive nature of your message, you have been connected to a counsellor. They will be with you shortly.")
+        
+        elif user_profile and user_profile['handler'] == 'ai_bot':
+            user_message = get_chat_data(message)['body']
+            ai_response = get_ai_response(user, user_message, user_profile['language'])
+            if ai_response is None:
+                logging.error('Failed to get response from ai_bot for user: %s, request:%s', user, user_message)
+                send_message(user, "We are experiencing some dificulties. Try again soon")
+            if ai_response == "Escalating to a counsellor...":
+                #user_transcript = get_transcript(user)
+                escalate_to_counsellor(user)
+                notify_user_counsellor_assigned(user, user_profile['language'])
+                send_message(user, "Due to the sensitive nature of your message, you have been connected to a counsellor. They will be with you shortly.")
+            else:
+                print(f"AI response to {user}: {ai_response}")
+                send_message(user, ai_response)
+                #save_conversation("ai_bot", ai_response)
+    
         else:
-            print(f"AI response to {user}: {ai_response}")
-            send_message(user, ai_response)
-            #save_conversation("ai_bot", ai_response)
+            logging.error("Failed to retrieve user and their handler")  
+    
     else:
         msg = get_chat_data(message)['body']
         send_message(user, msg, reciever_id)
@@ -340,6 +474,8 @@ def send_message(user, message, sender='ai_bot'):
         if "error" in response:
             print(f"Error sending message to {user}: {response['error']}")
         else:
+            #check if message was sent
+            #handles endpoints for text messages with 'sent' field
             if response['sent']:
                 logging.info("Message sent successfully to user: %s", user)
                 save_conversation(sender, response['message'])
@@ -472,11 +608,49 @@ def send_language_selection(user):
     if "error" in response:
         logging.error("Error sending language selection to %s: %s", user, response['error'])
         # Fallback to text message
-        send_message(user, LANGUAGE_SELECTION_PROMPT + "\n\nReply 'English' or 'Français'")
+        #send_message(user, LANGUAGE_SELECTION_PROMPT + "\n\nReply 'English' or 'Français'")
     else:
         logging.info("Language selection sent successfully to user: %s", user)
+        save_conversation('ai_bot', response['message'])
 
     return response
+
+def get_button_category_and_options(message):
+    msg_type = message['type']
+    if msg_type == 'reply':
+        if message[msg_type]['type'] == 'buttons_reply':
+            _ , reply_info = (message[msg_type]['buttons_reply']['id']).split(':')
+            category, option = reply_info.split('_')
+            return category, option
+    else:
+        return
+
+def send_onboarding_question(questions_obj, current_question, user_language, user):
+    question, options = data_extractor.message_builder(questions_obj, current_question, user_language)
+
+    logging.info("Sending onboarding question to user %s: %s", user, current_question)
+    route = os.getenv('DEFAULT_ROUTE', 'test_route')
+    res_status = data_extractor.send_question(user, question, route, options)
+    if not res_status:
+        logging.error("Failed to send onboarding question and options %s to user %s", current_question, user)
+        return False
+    else:
+        users.update_user(user, "onboarding_level", current_question)
+        #logging.info("Initialized onboarding for user %s with first question: %s", user, current_question)
+        logging.info("Onboarding question %s sent successfully to user %s", current_question, user)
+    return True
+
+def extract_data_from_reply(message):
+    msg_type = message['type']
+    if msg_type == 'reply':
+        if message[msg_type]['type'] == 'buttons_reply':
+            _ , reply_info = (message[msg_type]['buttons_reply']['id']).split(':')
+            # Use rsplit with maxsplit=1 to handle question keys with underscores (e.g., arv_medication)
+            category, option_number = reply_info.rsplit('_', 1)
+            option = message[msg_type]['buttons_reply']['title']
+            return category, option
+    else:
+        return
 
 if __name__ == "__main__":
     # Example usage

@@ -589,6 +589,28 @@ def get_memory(user_id):
     logging.info(f"Retrieved {len(result)} messages for user: {user_id}")
     return result
 
+def get_last_memory(user_id):
+    """
+    Retrieves the user last message
+
+    Args:
+        user_id (str): User's id
+
+    Returns:
+        dict: dict of user's last message
+    """
+    logging.debug(f"Retrieving last memory for user: {user_id}")
+    conn = connect_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM messages WHERE _from = ? OR _to = ? ORDER BY timestamp DESC LIMIT 1", (user_id, user_id))
+    result = cur.fetchone()
+    close_db(conn)
+    if result:
+        logging.info(f"Retrieved last message for user: {user_id}")
+    else:
+        logging.info(f"No messages found for user: {user_id}")
+    return result
+
 def save_memory(message, user_id, receiver_id=None):
     """
     Save a message to the database.

@@ -59,13 +59,15 @@ def detect_language(text, default='en', min_confidence=0.7):
             'aide', 'besoin', 'enceinte', 'avortement', 'grossesse', 'règles',
             'svp', 's\'il', 'sil', 'vous', 'plaît', 'allô', 'allo', 'bsr', 'bjr',
             'je', 'tu', 'nous', 'mes', 'ça', 'ca', 'alors', 'quoi', 'pourquoi',
-            'comment', 'quand', 'où', 'qui', 'combien'
+            'comment', 'quand', 'où', 'qui', 'combien', 'francais', 'française', 
+            'français', 'France', 'fr', 'FR', 'FRANCAIS'
         }
 
         english_keywords = {
             'hello', 'hi', 'hey', 'thanks', 'thank', 'yes', 'no', 'how',
             'help', 'need', 'pregnant', 'abortion', 'pregnancy', 'period',
-            'please', 'pls', 'what', 'why', 'when', 'where', 'who', 'how'
+            'please', 'pls', 'what', 'why', 'when', 'where', 'who', 'how', 'english'
+            ,'English', 'ENGLISH', 'england', 'eng',
         }
 
         # Check if any word in the text matches keywords

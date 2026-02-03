@@ -17,10 +17,10 @@ Write-Host "Applying database migrations..." -ForegroundColor Yellow
 python migrate.py apply
 
 # Check if intent model is trained
-if (-not (Test-Path "ai_bot\intent_classifier.joblib") -or -not (Test-Path "ai_bot\intent_vectorizer.joblib")) {
-    Write-Host "Intent model not found, training..." -ForegroundColor Yellow
-    python ai_bot\ml_intent_detection.py
-}
+# if (-not (Test-Path "ai_bot\intent_classifier.joblib") -or -not (Test-Path "ai_bot\intent_vectorizer.joblib")) {
+#     Write-Host "Intent model not found, training..." -ForegroundColor Yellow
+#     python ai_bot\ml_intent_detection.py
+# }
 
 # Get port from .env or use default
 $PORT = 80

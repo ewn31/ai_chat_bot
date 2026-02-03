@@ -55,15 +55,14 @@ def handle_new_messages():
 
                     # Create a properly formatted message object for incoming_messages
                     # Include both the button ID and the button text
-                    button_message = {
-                        'type': 'text',
-                        'text': {
-                            'body': button_title  # The visible text on the button
-                        },
-                        'id': button_id  # The button ID for identification
-                    }
-
-                    incoming_messages(user_id, button_message)
+                    # button_message = {
+                    #      'type': 'text',
+                    #      'text': {
+                    #          'body': button_title  # The visible text on the button
+                    #      },
+                    #      'id': button_id  # The button ID for identification
+                    # }
+                    incoming_messages(user_id, message)
             elif response_type == 'unknown':
                 continue
             else:

@@ -7,6 +7,18 @@
         "options": {
             "en": ["Under 18", "18-24", "25-34", "35-44", "45+", "Prefer not to say"],
             "fr": ["Moins de 18 ans", "18-24", "25-34", "35-44", "45+", "Préfère ne pas dire"]
+        },
+        "constraints": {
+            "type": "choice",
+            "required": false,
+            "allow_text_input": true,
+            "text_type": "number",
+            "min_value": 1,
+            "max_value": 120,
+            "error_message": {
+                "en": "Please enter a valid age (1-120) or select an option above.",
+                "fr": "Veuillez entrer un âge valide (1-120) ou sélectionner une option ci-dessus."
+            }
         }
     },
     "gender": {
@@ -17,6 +29,17 @@
         "options": {
             "en": ["Male", "Female", "Other", "Prefer not to say"],
             "fr": ["Homme", "Femme", "Autre", "Préfère ne pas dire"]
+        },
+        "constraints": {
+            "type": "choice",
+            "required": false,
+            "allow_text_input": true,
+            "text_type": "text",
+            "max_length": 50,
+            "error_message": {
+                "en": "Please select an option or enter your gender identity (max 50 characters).",
+                "fr": "Veuillez sélectionner une option ou entrer votre identité de genre (max 50 caractères)."
+            }
         }
     },
     "children": {
@@ -27,12 +50,35 @@
         "options": {
             "en": ["0", "1", "2", "3", "4+", "Skip"],
             "fr": ["0", "1", "2", "3", "4+", "Passer"]
+        },
+        "constraints": {
+            "type": "choice",
+            "required": false,
+            "allow_text_input": true,
+            "text_type": "number",
+            "min_value": 0,
+            "max_value": 50,
+            "error_message": {
+                "en": "Please enter a valid number (0-50) or select an option.",
+                "fr": "Veuillez entrer un nombre valide (0-50) ou sélectionner une option."
+            }
         }
     },
     "location": {
         "question": {
             "en": "What is your city/location?",
             "fr": "Quelle est votre ville/localisation ?"
+        },
+        "constraints": {
+            "type": "text",
+            "required": false,
+            "min_length": 2,
+            "max_length": 100,
+            "pattern": "^[a-zA-Z0-9\\s\\-\\.,'àâäéèêëïîôùûüÿçÀÂÄÉÈÊËÏÎÔÙÛÜŸÇ]+$",
+            "error_message": {
+                "en": "Please enter a valid location (2-100 characters, letters and basic punctuation only).",
+                "fr": "Veuillez entrer une localisation valide (2-100 caractères, lettres et ponctuation de base uniquement)."
+            }
         }
     },
     "disabilities": {
@@ -43,6 +89,17 @@
         "options": {
             "en": ["None", "Yes (will specify)", "Prefer not to say"],
             "fr": ["Aucun", "Oui (je préciserai)", "Préfère ne pas dire"]
+        },
+        "constraints": {
+            "type": "choice",
+            "required": false,
+            "allow_text_input": true,
+            "text_type": "text",
+            "max_length": 200,
+            "error_message": {
+                "en": "Please select an option or describe your condition (max 200 characters).",
+                "fr": "Veuillez sélectionner une option ou décrire votre condition (max 200 caractères)."
+            }
         }
     },
     "arv_medication": {
@@ -53,6 +110,15 @@
         "options": {
             "en": ["Yes", "No", "Prefer not to say"],
             "fr": ["Oui", "Non", "Préfère ne pas dire"]
+        },
+        "constraints": {
+            "type": "choice",
+            "required": false,
+            "allow_text_input": false,
+            "error_message": {
+                "en": "Please select one of the options above.",
+                "fr": "Veuillez sélectionner l'une des options ci-dessus."
+            }
         }
     },
     "displaced": {
@@ -63,6 +129,15 @@
         "options": {
             "en": ["Yes", "No", "Prefer not to say"],
             "fr": ["Oui", "Non", "Préfère ne pas dire"]
+        },
+        "constraints": {
+            "type": "choice",
+            "required": false,
+            "allow_text_input": false,
+            "error_message": {
+                "en": "Please select one of the options above.",
+                "fr": "Veuillez sélectionner l'une des options ci-dessus."
+            }
         }
     },
     "occupation": {
@@ -73,6 +148,17 @@
         "options": {
             "en": ["Student", "Employed", "Self-employed", "Unemployed", "Skip"],
             "fr": ["Étudiant(e)", "Employé(e)", "Indépendant(e)", "Sans emploi", "Passer"]
+        },
+        "constraints": {
+            "type": "choice",
+            "required": false,
+            "allow_text_input": true,
+            "text_type": "text",
+            "max_length": 100,
+            "error_message": {
+                "en": "Please select an option or enter your occupation (max 100 characters).",
+                "fr": "Veuillez sélectionner une option ou entrer votre profession (max 100 caractères)."
+            }
         }
     },
     "last_menstrual_period": {
@@ -83,6 +169,15 @@
         "options": {
             "en": ["Less than 4 weeks", "4-8 weeks", "8-12 weeks", "More than 12 weeks", "Not applicable", "Skip"],
             "fr": ["Moins de 4 semaines", "4-8 semaines", "8-12 semaines", "Plus de 12 semaines", "Non applicable", "Passer"]
+        },
+        "constraints": {
+            "type": "choice",
+            "required": false,
+            "allow_text_input": false,
+            "error_message": {
+                "en": "Please select one of the options above.",
+                "fr": "Veuillez sélectionner l'une des options ci-dessus."
+            }
         }
     },
     "marital_status": {
@@ -93,6 +188,15 @@
         "options": {
             "en": ["Single", "Married", "Divorced", "Widowed", "In a relationship", "Skip"],
             "fr": ["Célibataire", "Marié(e)", "Divorcé(e)", "Veuf/Veuve", "En couple", "Passer"]
+        },
+        "constraints": {
+            "type": "choice",
+            "required": false,
+            "allow_text_input": false,
+            "error_message": {
+                "en": "Please select one of the options above.",
+                "fr": "Veuillez sélectionner l'une des options ci-dessus."
+            }
         }
     },
     "religious_background": {
@@ -103,6 +207,17 @@
         "options": {
             "en": ["Christian", "Muslim", "Other", "None", "Skip"],
             "fr": ["Chrétien(ne)", "Musulman(e)", "Autre", "Aucune", "Passer"]
+        },
+        "constraints": {
+            "type": "choice",
+            "required": false,
+            "allow_text_input": true,
+            "text_type": "text",
+            "max_length": 100,
+            "error_message": {
+                "en": "Please select an option or specify your religious background (max 100 characters).",
+                "fr": "Veuillez sélectionner une option ou préciser votre appartenance religieuse (max 100 caractères)."
+            }
         }
     }
 }

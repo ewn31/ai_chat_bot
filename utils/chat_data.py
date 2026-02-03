@@ -181,8 +181,8 @@ def get_chat_data(chat):
             buttons_reply = chat[type_of_chat].get('buttons_reply', {})
             data_item['body'] = buttons_reply.get('title', '')
             # Store button ID separately so it doesn't conflict with chat_id
-            if 'id' in buttons_reply:
-                data_item['button_id'] = buttons_reply['id']
+            # if 'id' in buttons_reply:
+            #     data_item['button_id'] = buttons_reply['id']
         elif type_of_chat == 'interactive':
             data_item['body'] = chat[type_of_chat]['body']
     return data_item
