@@ -308,7 +308,7 @@ REMEMBER:
 5. Recommend medical consultation when appropriate
 
 Respond in plain text (no XML tags in output).
-Respond in {language}
+CRITICAL: You MUST respond ENTIRELY in {language}. Every single word of your response must be in {language}. Do not mix languages.
 </instructions>
 """
     
@@ -402,6 +402,10 @@ def get_response(user_query: str, lang: str = "en", history: list = None) -> str
             return "I can help with questions about menstrual health, including periods, cramps, products, and menstrual dignity. What would you like to know?"
 
     context = "\n\n".join([doc.page_content for doc in retrieved_docs])
+    
+    if lang.lower() in ["fr", "french"]:
+        print("Responding in French")
+        lang = "french"
 
     prompt = build_prompt(context, user_query, lang, history)
     
