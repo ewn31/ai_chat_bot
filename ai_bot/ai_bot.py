@@ -258,15 +258,30 @@ print("Welcome to your RAG chatbot! Type 'exit' or 'quit' to stop.")
 #     return prompt
 
 
-def build_prompt(context: str, user_query: str, lang: str = "en", history: list = None) -> str:
+def build_prompt(context: str, user_query: str, lang: str = "en", history = None) -> str:
     """Build complete prompt for menstrual health bot."""
-    
+
     # Format conversation history
+    # FIX: history can be either a string (from prepare_history_for_llm in chat_handler)
+    # or a list of dicts (from Gradio demo). Handle both cases.
+    # NOTE: If Gradio demo breaks, check that it passes history as list of dicts with 'user' and 'bot' keys
     if history:
-        history_text = "\n".join([
-            f"User: {turn['user']}\nBot: {turn['bot']}"
-            for turn in history[-5:]  # Last 5 turns
-        ])
+        if isinstance(history, str):
+            # History is already formatted as a string (from prepare_history_for_llm)
+            history_text = history
+        elif isinstance(history, list) and len(history) > 0:
+            # History is a list - check if it's list of dicts or list of tuples
+            if isinstance(history[0], dict) and 'user' in history[0] and 'bot' in history[0]:
+                # List of dicts with 'user' and 'bot' keys (Gradio format)
+                history_text = "\n".join([
+                    f"User: {turn['user']}\nBot: {turn['bot']}"
+                    for turn in history[-5:]  # Last 5 turns
+                ])
+            else:
+                # Unknown format - convert to string
+                history_text = str(history)
+        else:
+            history_text = "This is the start of the conversation."
     else:
         history_text = "This is the start of the conversation."
         
