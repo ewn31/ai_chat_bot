@@ -12,8 +12,10 @@ pandas
 scikit-learn
 joblib
 gradio
+matplotlib
 nltk
 flask
+flask-cors
 waitress
 langdetect
 gunicorn

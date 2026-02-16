@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aunty Queen Connect — Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>Aunty Queen Connect</h1>
+    <p>Admin Dashboard &mdash; Manage counsellors, monitor conversations, and configure system settings</p>
+  </div>
+
+  <!-- API Key Bar -->
+  <div class="api-bar">
+    <label for="api-key-input">API Key</label>
+    <input type="password" id="api-key-input" placeholder="Enter your dashboard API key">
+    <button class="btn btn-primary" onclick="loadOverview()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Connect
+    </button>
+  </div>
+  <div id="global-error" class="result-msg"></div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="analytics">Analytics</button>
+    <button class="tab-btn" data-tab="counsellors">Counsellors</button>
+    <button class="tab-btn" data-tab="tickets">Tickets</button>
+    <button class="tab-btn" data-tab="users">Users</button>
+    <button class="tab-btn" data-tab="messages">Messages</button>
+    <button class="tab-btn" data-tab="settings">Settings</button>
+  </div>
+
+  <!-- ========== OVERVIEW ========== -->
+  <div id="tab-overview" class="tab-content active">
+    <div class="section-header">System Overview</div>
+
+    <!-- Primary stat cards -->
+    <div class="stats-grid">
+      <div class="stat-card primary">
+        <div class="stat-text">
+          <div class="stat-label">Total Users</div>
+          <div class="stat-value" id="stat-users">-</div>
+        </div>
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+      </div>
+      <div class="stat-card success">
+        <div class="stat-text">
+          <div class="stat-label">Total Messages</div>
+          <div class="stat-value" id="stat-messages">-</div>
+        </div>
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+      </div>
+      <div class="stat-card warning">
+        <div class="stat-text">
+          <div class="stat-label">Active Tickets</div>
+          <div class="stat-value" id="stat-tickets">-</div>
+        </div>
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+      </div>
+      <div class="stat-card info">
+        <div class="stat-text">
+          <div class="stat-label">Counsellors</div>
+          <div class="stat-value" id="stat-counsellors">-</div>
+        </div>
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Secondary stat row -->
+    <div class="stats-secondary">
+      <div class="stat-card-sm">
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </div>
+        <div class="stat-text">
+          <div class="stat-label">Maintenance Mode</div>
+          <div class="stat-value" id="stat-maintenance">-</div>
+        </div>
+      </div>
+      <div class="stat-card-sm">
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z"/><circle cx="12" cy="15" r="1"/></svg>
+        </div>
+        <div class="stat-text">
+          <div class="stat-label">AI Model</div>
+          <div class="stat-value" id="stat-model">-</div>
+        </div>
+      </div>
+      <div class="stat-card-sm">
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="stat-text">
+          <div class="stat-label">Uptime</div>
+          <div class="stat-value">Active</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="loadOverview()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Refresh Stats
+    </button>
+
+    <div class="section-header">Recent Activity</div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header">
+          <h3>Latest Tickets</h3>
+        </div>
+        <div class="card-body">
+          <div id="overview-tickets"><div class="empty-state">Loading...</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>Latest Messages</h3>
+        </div>
+        <div class="card-body">
+          <div id="overview-messages"><div class="empty-state">Loading...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ANALYTICS ========== -->
+  <div id="tab-analytics" class="tab-content">
+    <div class="section-header">Analytics &amp; Insights</div>
+    <button class="btn btn-primary" onclick="loadAnalytics()" style="margin-bottom:16px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Refresh Charts
+    </button>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Messages (Last 30 Days)</h3>
+        <div style="height:260px"><canvas id="msgChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Ticket Status</h3>
+        <div style="height:260px"><canvas id="ticketChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Users by Age Range</h3>
+        <div style="height:260px"><canvas id="demoChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Users by Language</h3>
+        <div style="height:260px"><canvas id="langChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== COUNSELLORS ========== -->
+  <div id="tab-counsellors" class="tab-content">
+    <div class="section-header">Counsellor Management</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>All Counsellors</h3>
+        <button class="btn" onclick="loadCounsellors()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div class="card-body">
+        <div id="counsellors-table"><div class="empty-state">Loading...</div></div>
+      </div>
+    </div>
+
+    <div class="section-header">Add New Counsellor</div>
+    <div class="card">
+      <div class="card-body-padded">
+        <div class="form-row">
+          <div>
+            <div class="form-group"><label>Username</label><input id="c-username" placeholder="e.g. alice"><div class="hint">Required. Must be unique.</div></div>
+            <div class="form-group"><label>Full Name</label><input id="c-name" placeholder="e.g. Alice Smith"></div>
+            <div class="form-group"><label>Email</label><input id="c-email" placeholder="e.g. alice@example.com"><div class="hint">Required.</div></div>
+          </div>
+          <div>
+            <div class="form-group"><label>Password</label><input id="c-password" type="password" placeholder="Leave empty for default"><div class="hint">Default: changeme123</div></div>
+            <div class="form-group"><label>Phone</label><input id="c-phone" placeholder="e.g. 237612345678"></div>
+            <div class="form-group"><label>WhatsApp Number</label><input id="c-whatsapp" placeholder="e.g. 237612345678"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="createCounsellor()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          Create Counsellor
+        </button>
+        <div id="counsellor-result" class="result-msg"></div>
+      </div>
+    </div>
+
+    <div class="danger-zone">
+      <h4>Remove Counsellor</h4>
+      <div class="danger-warn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        This action is irreversible. The counsellor will be permanently removed.
+      </div>
+      <div class="danger-row">
+        <input id="c-delete-username" placeholder="Enter username">
+        <button class="btn btn-danger-fill" onclick="deleteCounsellor()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          Delete
+        </button>
+      </div>
+      <div id="counsellor-delete-result" class="result-msg"></div>
+    </div>
+  </div>
+
+  <!-- ========== TICKETS ========== -->
+  <div id="tab-tickets" class="tab-content">
+    <div class="section-header">Ticket Management</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>All Tickets</h3>
+        <div class="toolbar" style="margin-bottom:0">
+          <select id="ticket-status-filter" onchange="loadTickets()">
+            <option value="all">All Statuses</option>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+            <option value="escalated">Escalated</option>
+            <option value="in_progress">In Progress</option>
+          </select>
+          <select id="ticket-limit">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="200">200</option>
+          </select>
+          <button class="btn" onclick="loadTickets()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="tickets-table"><div class="empty-state">Loading...</div></div>
+      </div>
+    </div>
+
+    <div class="section-header">Ticket Details</div>
+    <div class="toolbar">
+      <input id="ticket-id-input" placeholder="Enter ticket ID to view details" style="min-width:250px">
+      <button class="btn btn-primary" onclick="viewTicketDetails()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        View Details
+      </button>
+    </div>
+    <div id="ticket-result" class="result-msg"></div>
+    <div id="ticket-detail-panel" class="detail-panel" style="display:none"></div>
+  </div>
+
+  <!-- ========== USERS ========== -->
+  <div id="tab-users" class="tab-content">
+    <div class="section-header">User Management</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>All Users</h3>
+        <div class="toolbar" style="margin-bottom:0">
+          <input id="user-search" placeholder="Search by phone / user ID">
+          <select id="user-limit">
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+          <button class="btn btn-primary" onclick="loadUsers()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Search
+          </button>
+          <button class="btn" onclick="document.getElementById('user-search').value='';loadUsers()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Reset
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="users-table"><div class="empty-state">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MESSAGES ========== -->
+  <div id="tab-messages" class="tab-content">
+    <div class="section-header">Message Log</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>All Messages</h3>
+        <div class="toolbar" style="margin-bottom:0">
+          <input id="msg-search" placeholder="Search by user ID or message content">
+          <select id="msg-limit">
+            <option value="25">25</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+          <button class="btn btn-primary" onclick="loadMessages()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Search
+          </button>
+          <button class="btn" onclick="document.getElementById('msg-search').value='';loadMessages()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Reset
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="messages-table"><div class="empty-state">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SETTINGS ========== -->
+  <div id="tab-settings" class="tab-content">
+    <div class="section-header">System Configuration</div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>All Configurations</h3>
+        <button class="btn" onclick="loadSettings()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div class="card-body">
+        <div id="settings-table"><div class="empty-state">Loading...</div></div>
+      </div>
+    </div>
+
+    <div class="section-header">Update Configuration</div>
+    <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">Only editable configurations can be modified.</p>
+    <div class="card">
+      <div class="card-body-padded">
+        <div style="display:grid;grid-template-columns:1fr 2fr 2fr;gap:14px">
+          <div class="form-group">
+            <label>Category</label>
+            <select id="setting-category">
+              <option value="config">config</option>
+              <option value="stats">stats</option>
+              <option value="health">health</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Config Key</label><input id="setting-key" placeholder="e.g. maintenance_mode"></div>
+          <div class="form-group"><label>New Value</label><input id="setting-value" placeholder="e.g. true"></div>
+        </div>
+        <button class="btn btn-primary" onclick="updateSetting()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save Configuration
+        </button>
+        <div id="setting-result" class="result-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Aunty Queen Connect Admin Dashboard v2.0 &bull; SQLite &bull; Vanilla JS
+  </div>
+
+</div>
+
+<!-- Chart.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

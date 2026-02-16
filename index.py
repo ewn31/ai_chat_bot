@@ -1,15 +1,23 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from dotenv import load_dotenv
+from flask_cors import CORS
 from chat_handler import incoming_messages
 import counsellors
 import database.db as db
 import logging
 from counsellor_handler import create_counsellor
+from api.dashboard_bp import dashboard_bp
 
 load_dotenv()  # Load environment variables from a .env file
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='')
+
+# Enable CORS for dashboard API endpoints only
+CORS(app, resources={r"/api/dashboard/*": {"origins": "*"}})
+
+# Register dashboard API blueprint
+app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
 
 # Configure logging
 logging_level = os.getenv('LOGGING_LEVEL', 'INFO').upper()
@@ -385,6 +393,19 @@ def add_counsellor_channel(username):
             'success': False,
             'error': str(e)
         }), 500
+
+
+# =============================================================================
+# REACT DASHBOARD STATIC SERVING
+# =============================================================================
+
+@app.route('/dashboard')
+@app.route('/dashboard/<path:path>')
+def serve_dashboard(path=''):
+    """Serve the React admin dashboard SPA."""
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, 'index.html')
 
 
 if __name__ == '__main__':

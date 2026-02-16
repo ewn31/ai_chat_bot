@@ -360,6 +360,17 @@ MIGRATIONS = [
         ]
     },
 
+    # Migration 12: Add dashboard API key for REST API authentication
+    {
+        'version': 12,
+        'description': 'Add dashboard_api_key configuration for REST API authentication',
+        'sql': [
+            """INSERT INTO system_metadata (category, key, value, data_type, description, is_editable) VALUES
+                ('config', 'dashboard_api_key', '', 'string', 'API key for dashboard REST API access', 1)
+            """
+        ]
+    },
+
     # Example Migration 3: Create a new table
     # {
     #     'version': 3,
