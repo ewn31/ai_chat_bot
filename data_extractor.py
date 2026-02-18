@@ -57,7 +57,7 @@ def message_builder(question_list:dict, question_title:str, language:str='en'):
 
     # Build Whapi-compatible button message
     option_message = {
-        'body': {'text': question_text},
+        'body': {'text': "Please select an option."},
         'action': {'buttons': []},
         'type': 'button'
     }

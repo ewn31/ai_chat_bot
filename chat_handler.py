@@ -22,10 +22,10 @@ dotenv.load_dotenv()
 #incoming message are dictionaries
 #Not all the incoming messages have the same structure
 
-GREETINGS_EN = """Hello bestie, welcome to aunty queen connect. I’m your good friend AWAA and I’m here to listen to, and share truthful, judgment-free information about safe abortion and reproductive health with you.
+GREETINGS_EN = """Hello bestie, welcome to aunty queen connect. I’m your good friend MORIA and I’m here to listen to, and share truthful, judgment-free information about menstrual health with you.
 Feel free to ask me anything. It’s private, safe, and always with care."""
 
-GREETINGS_FR = """Bonjour mon ami, bienvenue à Aunty Queen Connect. Je suis votre bonne amie AWAA et je suis ici pour vous écouter et partager des 
+GREETINGS_FR = """Bonjour mon ami, bienvenue à Aunty Queen Connect. Je suis votre bonne amie MORIA et je suis ici pour vous écouter et partager des 
 informations véridiques et sans jugement sur l'avortement sûr et la santé reproductive avec vous."""
 
 LANGUAGE_SELECTION_PROMPT = """Hello / Bonjour 👋
