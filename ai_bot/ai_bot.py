@@ -63,7 +63,7 @@ db = Chroma.from_documents(split_docs, embedding)
 # 6. Set up Together LLM
 # Model options (uncomment the one you want to use):
 
-llm_model = os.getenv("LLM", "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo")
+llm_model = os.getenv("LLM", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
 
 # RECOMMENDED: Best for empathetic healthcare conversations
 llm = Together(
