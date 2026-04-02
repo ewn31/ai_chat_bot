@@ -35,7 +35,10 @@ except ImportError:
 
 
 # 1. Set your Together API key
-os.environ["TOGETHER_API_KEY"] = "b65d99efc7e9fde5f5d8ff5e14171b2c736c26e8d45732093efde92c1d6c2f9e"
+api_key = os.getenv("TOGETHER_API_KEY")
+if api_key is None:
+    print("TOGETHER API KEY NOT SET")
+os.environ["TOGETHER_API_KEY"] = api_key
 
 # Get the directory where this script is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
