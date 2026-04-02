@@ -391,7 +391,13 @@ def incoming_messages(user, message, reciever_id=None):
         
         elif user_profile and user_profile['handler'] == 'ai_bot':
             user_message = get_chat_data(message)['body']
-            ai_response = get_ai_response(user, user_message, user_profile['language'])
+    
+            #Deal with clients whose languages where not recorded
+            if user_profile['language']:
+                ai_response = get_ai_response(user, user_message, user_profile['language'])
+            else:
+                query_lang = detect_language(user_message)
+                ai_response = get_ai_response(user, user_message, query_lang)
             if ai_response is None:
                 logging.error('Failed to get response from ai_bot for user: %s, request:%s', user, user_message)
                 send_message(user, "We are experiencing some dificulties. Try again soon")
@@ -399,7 +405,12 @@ def incoming_messages(user, message, reciever_id=None):
                 #user_transcript = get_transcript(user)
                 escalate_to_counsellor(user)
                 notify_user_counsellor_assigned(user, user_profile['language'])
-                send_message(user, "Due to the sensitive nature of your message, you have been connected to a counsellor. They will be with you shortly.")
+                if not user_profile['language']:
+                    query_lang = detect_language(user_message)
+                if (user_profile['language'].lower() == 'fr') or (query_lang == 'fr'):
+                    send_message(user, "Compte tenu de la nature délicate de votre message, vous avez été mis en relation avec un conseiller. Il vous contactera sous peu.")
+                else:
+                    send_message(user, "Due to the sensitive nature of your message, you have been connected to a counsellor. They will be with you shortly.")    
             else:
                 print(f"AI response to {user}: {ai_response}")
                 send_message(user, ai_response)
@@ -460,7 +471,7 @@ def get_ai_response(user, message, language):
     logging.debug("Prepared history: %s", history)
     logging.info("Getting response from llm")
     llm_response =  get_response(message, language, history)
-    logging.debug("response fromm llm: %s", llm_response)
+    logging.debug("response from llm: %s", llm_response)
     return llm_response
     
 
