@@ -386,6 +386,14 @@ def get_response(user_query: str, lang: str = "en", history: list = None) -> str
     Get response from menstrual health chatbot.
     Includes medical alert detection.
     """
+    # Step 0: Detect intent
+    intent, confidence = detect_intent(user_query)
+    #memory.add_turn("User", user_query)
+    print(f"Detected intent: {intent} (confidence: {confidence})")
+
+    if intent == "escalate" and confidence > 0.6:
+        #memory.add_turn("Bot", "Escalating to a human agent...")
+        return "Escalating to a counsellor..."
     
     # STEP 1: Check for medical alerts
     alert_type, requires_attention = detect_medical_alert(user_query)
