@@ -163,3 +163,21 @@ Medical hotline: {COUNSELOR_PHONE}
 
 Your health is the priority. 💚"""
 }
+
+
+def detect_medical_alert(text: str) -> tuple[str | None, bool]:
+    """
+    Detect if abortion health query requires medical attention.
+    
+    Returns: (alert_type, requires_attention)
+    """
+    import re
+    
+    text_lower = text.lower()
+    
+    for alert_type, patterns in CRISIS_PATTERNS.items():
+        for pattern in patterns:
+            if re.search(pattern, text_lower, re.IGNORECASE):
+                return alert_type, True
+    
+    return None, False

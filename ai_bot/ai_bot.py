@@ -8,21 +8,25 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_together import Together
-#from .intent_inference import detect_intent
+from .intent_inference import detect_intent
 import gradio as gr
 
 try:
-    from .menstrual_health_prompt import (
-        MENSTRUAL_HEALTH_SYSTEM_PROMPT,
-        MENSTRUAL_MEDICAL_ALERTS,
-        MEDICAL_ALERT_RESPONSES,
+    from .abortion_counselling_prompt import (
+        SYSTEM_PROMPT,
+        CRISIS_PATTERNS,
+        COUNSELOR_PHONE,
+        CRISIS_HOTLINE,
+        ESCALATION_MESSAGES,
         detect_medical_alert
     )
 except ImportError:
-    from menstrual_health_prompt import (
-        MENSTRUAL_HEALTH_SYSTEM_PROMPT,
-        MENSTRUAL_MEDICAL_ALERTS,
-        MEDICAL_ALERT_RESPONSES,
+    from abortion_counselling_prompt import (
+        SYSTEM_PROMPT,
+        CRISIS_PATTERNS,
+        COUNSELOR_PHONE,
+        CRISIS_HOTLINE,
+        ESCALATION_MESSAGES,
         detect_medical_alert
     )
 
@@ -35,7 +39,10 @@ except ImportError:
 
 
 # 1. Set your Together API key
-os.environ["TOGETHER_API_KEY"] = "b65d99efc7e9fde5f5d8ff5e14171b2c736c26e8d45732093efde92c1d6c2f9e"
+api_key = os.getenv("TOGETHER_API_KEY")
+if api_key is None:
+    print("TOGETHER API KEY NOT SET IN ENV FILE")
+os.environ["TOGETHER_API_KEY"] = api_key
 
 # Get the directory where this script is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -294,7 +301,7 @@ def build_prompt(context: str, user_query: str, lang: str = "en", history = None
     
 
     # Build prompt
-    prompt = f"""{MENSTRUAL_HEALTH_SYSTEM_PROMPT}
+    prompt = f"""{SYSTEM_PROMPT}
 
 <relevant_information>
 The following information from the knowledge base may be helpful:
@@ -314,13 +321,12 @@ The following information from the knowledge base may be helpful:
 Respond following all guidelines above.
 
 If a question is out of scope, respond with:
-I can only answer questions related to menstrual health, including periods, cramps, products, and menstrual dignity. What would you like to know?
+I can only answer questions related to abortion. What would you like to know?
 REMEMBER:
-1. Use inclusive language (not only women menstruate)
-2. Normalize menstruation (counter stigma)
-3. Provide accurate, evidence-based information
-4. Be specific with medical info (dosages, warnings)
-5. Recommend medical consultation when appropriate
+1. Be empathetic
+2. Provide accurate, evidence-based information
+3. Be specific with medical info (dosages, warnings)
+4. Recommend medical consultation when appropriate
 
 Respond in plain text (no XML tags in output).
 CRITICAL: You MUST respond ENTIRELY in {language}. Every single word of your response must be in {language}. Do not mix languages.
@@ -387,9 +393,8 @@ def get_response(user_query: str, lang: str = "en", history: list = None) -> str
     if requires_attention:
         print(f"⚠️ MEDICAL ALERT: {alert_type}")
         # Prepend medical alert to response
-        alert_message = MEDICAL_ALERT_RESPONSES.get(
-            alert_type,
-            MEDICAL_ALERT_RESPONSES["severe_symptoms"]
+        alert_message = ESCALATION_MESSAGES.get(
+            alert_type
         )
         
         # Still retrieve context for additional info
@@ -412,9 +417,9 @@ def get_response(user_query: str, lang: str = "en", history: list = None) -> str
     if not retrieved_docs:
         # Return localized message based on language
         if lang.lower() in ["fr", "french"]:
-            return "Je peux vous aider avec des questions sur la santé menstruelle, y compris les règles, les crampes, les produits et la dignité menstruelle. Que souhaitez-vous savoir?"
+            return "Je peux vous aider avec des questions sur l'avortement. Que souhaitez-vous savoir?"
         else:
-            return "I can help with questions about menstrual health, including periods, cramps, products, and menstrual dignity. What would you like to know?"
+            return "I can help with questions about safe abortion. What would you like to know?"
 
     context = "\n\n".join([doc.page_content for doc in retrieved_docs])
     
@@ -479,41 +484,19 @@ def chat_interface(user_query: str, history) -> str:
 
 
 # Create Gradio interface
-WELCOME_MESSAGE = """🌸 **Welcome to Menstrual Dignity & Health Support**
+WELCOME_MESSAGE = """🌸 **Welcome to Safe Abortion Support**
 
-I provide inclusive, stigma-free information about menstruation for everyone who menstruates - including women, girls, trans men, non-binary people, and all menstruators.
-
-**I can help with:**
-- Understanding your menstrual cycle
-- Managing cramps and pain
-- Choosing menstrual products
-- Busting myths and challenging stigma
-- Sexual health during periods
-- Gender-affirming menstrual strategies
-- When to seek medical help
-
-**Remember:** 
-- Menstruation is natural, healthy, and nothing to be ashamed of
-- Not only women menstruate
-- You deserve to manage your period with dignity
-
+I provide information on safe abortion.
 What would you like to know?
 """
 with gr.Blocks() as demo:
     gr.ChatInterface(
         fn=chat_interface,
-        title="Menstrual Dignity & Health Bot",
+        title="Abortion & Health Bot",
         description=WELCOME_MESSAGE,
         #theme="soft",
         examples=[
-            "What is menstrual dignity?",
-            "How do I use ibuprofen for cramps?",
-            "Can I swim during my period?",
-            "Is menstrual blood dirty?",
-            "I'm a trans guy and periods make me dysphoric. What can I do?",
-            "Can you get pregnant during your period?",
-            "What menstrual products are available?",
-            "When should I see a doctor about my period?",
+            "What is safe abortion",
                 ],
     #chatbot=gr.Chatbot(height=500),
     #textbox=gr.Textbox(placeholder="Ask about menstrual health...", container=False, scale=7),
@@ -524,12 +507,12 @@ with gr.Blocks() as demo:
 
 if __name__ == "__main__":
     print("\n" + "="*60)
-    print("MENSTRUAL DIGNITY & HEALTH CHATBOT")
+    print("ABORTION & HEALTH CHATBOT")
     print("="*60)
     
-    #if not TOGETHER_API_KEY:
-        #print("\n⚠️ ERROR: Set TOGETHER_API_KEY environment variable")
-        #exit(1)
+    if not api_key:
+        print("\n⚠️ ERROR: Set TOGETHER_API_KEY environment variable")
+        exit(1)
     
     print("\nLaunching Gradio interface...")
     demo.launch(share=True)    
