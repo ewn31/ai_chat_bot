@@ -2,13 +2,14 @@ import os
 import re
 from typing import Tuple, Optional
 
+import dotenv
 from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 #from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_together import Together
-from .intent_inference import detect_intent
+from intent_inference import detect_intent
 import gradio as gr
 
 try:
@@ -39,6 +40,7 @@ except ImportError:
 
 
 # 1. Set your Together API key
+dotenv.load_dotenv('../.env')
 api_key = os.getenv("TOGETHER_API_KEY")
 if api_key is None:
     print("TOGETHER API KEY NOT SET IN ENV FILE")
@@ -391,7 +393,7 @@ def get_response(user_query: str, lang: str = "en", history: list = None) -> str
     #memory.add_turn("User", user_query)
     print(f"Detected intent: {intent} (confidence: {confidence})")
 
-    if intent == "escalate" and confidence > 0.6:
+    if intent == "escalate" and confidence > 0.67:
         #memory.add_turn("Bot", "Escalating to a human agent...")
         return "Escalating to a counsellor..."
     
@@ -487,7 +489,7 @@ def chat_interface(user_query: str, history) -> str:
                 if user_msg and bot_msg:
                     chat_history.append({"user": user_msg, "bot": bot_msg})
     
-    response = get_response(user_query, chat_history)
+    response = get_response(user_query, 'en', chat_history)
     return response
 
 
