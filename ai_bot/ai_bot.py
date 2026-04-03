@@ -9,7 +9,12 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_together import Together
-from intent_inference import detect_intent
+import joblib
+try:
+    from improved_intent_training_data import detect_intent
+except ImportError:
+    from .improved_intent_training_data import detect_intent
+
 import gradio as gr
 
 try:
@@ -73,6 +78,12 @@ db = Chroma.from_documents(split_docs, embedding)
 # Model options (uncomment the one you want to use):
 
 llm_model = os.getenv("LLM", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
+
+#loading intent detection model
+
+# Load model and vectorizer only once on module import
+clf = joblib.load(os.path.join(script_dir, "intent_classifier.joblib"))
+vectorizer = joblib.load(os.path.join(script_dir, "intent_vectorizer.joblib"))
 
 # RECOMMENDED: Best for empathetic healthcare conversations
 llm = Together(
@@ -389,11 +400,11 @@ def get_response(user_query: str, lang: str = "en", history: list = None) -> str
     Includes medical alert detection.
     """
     # Step 0: Detect intent
-    intent, confidence = detect_intent(user_query)
+    intent, confidence = detect_intent(user_query, clf, vectorizer)
     #memory.add_turn("User", user_query)
     print(f"Detected intent: {intent} (confidence: {confidence})")
 
-    if intent == "escalate" and confidence > 0.8:
+    if intent == "escalate" and confidence > 0.3:
         #memory.add_turn("Bot", "Escalating to a human agent...")
         return "Escalating to a counsellor..."
     
