@@ -393,7 +393,7 @@ def get_response(user_query: str, lang: str = "en", history: list = None) -> str
     #memory.add_turn("User", user_query)
     print(f"Detected intent: {intent} (confidence: {confidence})")
 
-    if intent == "escalate" and confidence > 0.67:
+    if intent == "escalate" and confidence > 0.8:
         #memory.add_turn("Bot", "Escalating to a human agent...")
         return "Escalating to a counsellor..."
     
